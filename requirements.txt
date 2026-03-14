@@ -1,0 +1,28 @@
+# PDF Processing
+pdfplumber==0.11.0
+pypdf==4.1.0
+
+# LLM APIs
+google-generativeai==0.3.2
+openai==1.12.0
+
+# Utilities
+python-dotenv==1.0.1
+requests==2.31.0
+
+# Data Processing
+pandas==2.2.1
+numpy==1.26.4
+openpyxl==3.1.2  # Excel export için
+
+# Language Detection (optional)
+langdetect==1.0.9  # Gelişmiş dil tespiti için
+
+# CLI
+rich==13.7.1
+tqdm==4.66.2
+
+# Development
+pytest==8.1.1
+black==24.2.0
+flake8==7.0.0
