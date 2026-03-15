@@ -9,7 +9,8 @@
     "**/__pycache__/**",
     "*.json",
     "**/*.py",
-    "AJANLAR.md"
+    "AJANLAR.md",
+    "PROJE_KONTROL.md"
   ],
   "words": [
     "CBAM",
