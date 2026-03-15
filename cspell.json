@@ -1,5 +1,6 @@
 {
   "version": "0.2",
+  "enabled": false,
   "language": "en,tr",
   "import": ["@cspell/dict-tr-tr/cspell-ext.json"],
   "ignorePaths": [

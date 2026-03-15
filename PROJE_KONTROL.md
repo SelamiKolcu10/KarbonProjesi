@@ -38,3 +38,6 @@ Fabrikalar için yapay zeka destekli, çoklu ajan (multi-agent) tabanlı otomati
 
 - Güncelleme: `docs/AJANLAR.md` içerisine proje kontrol dosyasındakine benzer genel amaçlı, detaya inilmeyen bir "Ajan Sistemi Güncelleme Geçmişi" bölümü eklendi.
 
+
+- Güncelleme: `cspell.json` dosyasında genel imla denetimi (yazım hataları) devre dışı bırakıldı. Böylece projeye eklenen yeni kelimeler için hata alınması önlendi.
+

@@ -3,12 +3,13 @@ Hızlı v3.0 test scripti
 """
 
 import sys
-sys.stdout.reconfigure(encoding='utf-8')
-sys.stderr.reconfigure(encoding='utf-8')
+# type stubs için uyarıyı göz ardı et (Pylance)
+sys.stdout.reconfigure(encoding='utf-8') # type: ignore
+sys.stderr.reconfigure(encoding='utf-8') # type: ignore
 from pathlib import Path
 
-# Mevcut dizini kullan
-project_root = Path(__file__).parent
+# Mevcut dizini kullan (test klasörünün bir üstü, projenin kök dizinidir)
+project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from src.agents.data_extractor import DataExtractor
