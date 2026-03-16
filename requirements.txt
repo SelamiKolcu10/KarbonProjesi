@@ -22,6 +22,11 @@ langdetect==1.0.9  # Gelişmiş dil tespiti için
 rich==13.7.1
 tqdm==4.66.2
 
+# Web API
+fastapi==0.109.2
+uvicorn==0.27.1
+python-multipart==0.0.9
+
 # Development
 pytest==8.1.1
 black==24.2.0
