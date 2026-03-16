@@ -1,4 +1,5 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { Toaster } from "sonner";
 import AppLayout from "./components/layout/AppLayout";
 import Dashboard from "./pages/dashboard/page";
 import UploadPage from "./pages/upload/page";
@@ -13,6 +14,7 @@ import NotFound from "./pages/NotFound";
 export default function App() {
   return (
     <BrowserRouter>
+      <Toaster theme="dark" position="bottom-right" richColors closeButton />
       <Routes>
         <Route element={<AppLayout />}>
           <Route path="/" element={<Dashboard />} />
