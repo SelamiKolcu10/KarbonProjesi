@@ -1,367 +1,522 @@
 import { motion } from "framer-motion";
-import { AlertTriangle, AlertCircle, BarChart3, ChevronRight, Info } from "lucide-react";
-import { mockEmissionBreakdown, mockMonthlyTrend, mockEmissionDetails, mockMaliEtki, mockCbamTimeline, mockAuditTrail } from "@/lib/mock-data";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  LineChart,
+  Line,
+  ResponsiveContainer,
+  ReferenceLine,
+} from "recharts";
+import {
+  AlertTriangle,
+  AlertCircle,
+  ChevronDown,
+  ChevronRight,
+  Euro,
+  TrendingUp,
+  Clock,
+  CheckCircle2,
+  Cpu,
+  BarChart3,
+} from "lucide-react";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, LineChart, Line, ReferenceLine } from "recharts";
+import {
+  mockEmissionBreakdown,
+  mockMonthlyTrend,
+  mockEmissionDetails,
+  mockAuditTrail,
+  mockMaliEtki,
+  mockCbamTimeline,
+} from "@/lib/mock-data";
 
-const formatNumber = (n: number) =>
-  new Intl.NumberFormat("tr-TR").format(n);
+// ─── Formatters ────────────────────────────────────────────────────────────────
+const fmt = (n: number) => new Intl.NumberFormat("tr-TR").format(n);
+const fmtEur = (n: number) =>
+  new Intl.NumberFormat("tr-TR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
+const fmtDate = (iso: string) =>
+  new Intl.DateTimeFormat("tr-TR", { dateStyle: "short", timeStyle: "short" }).format(new Date(iso));
 
+// ─── Custom Tooltip ─────────────────────────────────────────────────────────────
+function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: Array<{ name: string; value: number; color: string }>; label?: string }) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="bg-card border border-border rounded-lg p-3 shadow-xl text-xs">
+      {label && <p className="text-muted-foreground mb-2 font-medium">{label}</p>}
+      {payload.map((p, i) => (
+        <div key={i} className="flex items-center gap-2">
+          <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ background: p.color }} />
+          <span className="text-muted-foreground">{p.name}:</span>
+          <span className="text-foreground font-semibold tabular-nums">
+            {fmt(p.value)} tCO₂e
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── Scope Pie Chart ────────────────────────────────────────────────────────────
+const SCOPE_DATA = [
+  { name: "Scope 1 (Doğrudan)", value: mockEmissionBreakdown.scope1, color: "#F59E0B" },
+  { name: "Scope 2 (Elektrik)", value: mockEmissionBreakdown.scope2, color: "#3B82F6" },
+  { name: "Proses Emisyonları",  value: mockEmissionBreakdown.process, color: "#8B5CF6" },
+];
+const TOTAL = SCOPE_DATA.reduce((s, d) => s + d.value, 0);
+
+function ScopePieChart() {
+  const [active, setActive] = useState<number | null>(null);
+  return (
+    <Card className="glass-card border-border">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-semibold text-foreground">Emisyon Kapsamı Dağılımı</CardTitle>
+        <p className="text-xs text-muted-foreground">Scope 1 / Scope 2 / Proses — tCO₂e</p>
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-center gap-4">
+          <ResponsiveContainer width={180} height={180}>
+            <PieChart>
+              <Pie
+                data={SCOPE_DATA}
+                cx="50%"
+                cy="50%"
+                innerRadius={52}
+                outerRadius={80}
+                paddingAngle={3}
+                dataKey="value"
+                onMouseEnter={(_, idx) => setActive(idx)}
+                onMouseLeave={() => setActive(null)}
+              >
+                {SCOPE_DATA.map((entry, i) => (
+                  <Cell
+                    key={entry.name}
+                    fill={entry.color}
+                    opacity={active === null || active === i ? 1 : 0.4}
+                    stroke="transparent"
+                  />
+                ))}
+              </Pie>
+              <Tooltip
+                content={({ active: a, payload: p }) =>
+                  a && p?.[0] ? (
+                    <div className="bg-card border border-border rounded-lg p-2 shadow-xl text-xs">
+                      <p className="text-foreground font-semibold">{p[0].name}</p>
+                      <p className="text-muted-foreground">{fmt(p[0].value as number)} tCO₂e</p>
+                      <p className="text-muted-foreground">{(((p[0].value as number) / TOTAL) * 100).toFixed(1)}%</p>
+                    </div>
+                  ) : null
+                }
+              />
+            </PieChart>
+          </ResponsiveContainer>
+          {/* Legend */}
+          <div className="flex-1 space-y-2.5">
+            {SCOPE_DATA.map((d, i) => (
+              <div
+                key={d.name}
+                className={cn("flex items-center justify-between p-2 rounded-lg transition-all cursor-default",
+                  active === i ? "bg-accent" : "hover:bg-accent/50"
+                )}
+                onMouseEnter={() => setActive(i)}
+                onMouseLeave={() => setActive(null)}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ background: d.color }} />
+                  <span className="text-xs text-muted-foreground">{d.name}</span>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs font-semibold text-foreground tabular-nums">{fmt(d.value)}</p>
+                  <p className="text-[10px] text-muted-foreground">{((d.value / TOTAL) * 100).toFixed(1)}%</p>
+                </div>
+              </div>
+            ))}
+            <div className="flex items-center justify-between pt-1 border-t border-border px-2">
+              <span className="text-xs text-muted-foreground font-medium">Toplam</span>
+              <span className="text-xs font-bold text-foreground tabular-nums">{fmt(TOTAL)} tCO₂e</span>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─── Source Bar Chart ───────────────────────────────────────────────────────────
+function SourceBarChart() {
+  return (
+    <Card className="glass-card border-border">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-semibold text-foreground">Emisyon Kaynakları</CardTitle>
+        <p className="text-xs text-muted-foreground">Kaynak bazlı kırılım — tCO₂e</p>
+      </CardHeader>
+      <CardContent>
+        <ResponsiveContainer width="100%" height={200}>
+          <BarChart data={mockEmissionBreakdown.sources} barSize={28} margin={{ top: 4, right: 4, left: -10, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.22 0.03 255)" vertical={false} />
+            <XAxis
+              dataKey="name"
+              tick={{ fontSize: 10, fill: "oklch(0.55 0.02 240)" }}
+              axisLine={false}
+              tickLine={false}
+            />
+            <YAxis
+              tick={{ fontSize: 10, fill: "oklch(0.55 0.02 240)" }}
+              axisLine={false}
+              tickLine={false}
+              tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}k`}
+            />
+            <Tooltip content={<CustomTooltip />} cursor={{ fill: "oklch(0.22 0.03 255 / 50%)" }} />
+            <Bar dataKey="value" name="tCO₂e" radius={[4, 4, 0, 0]}>
+              {mockEmissionBreakdown.sources.map((entry) => (
+                <Cell key={entry.name} fill={entry.color} />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─── Monthly Trend ──────────────────────────────────────────────────────────────
+function TrendChart() {
+  return (
+    <Card className="glass-card border-border">
+      <CardHeader className="pb-2">
+        <div className="flex items-start justify-between">
+          <div>
+            <CardTitle className="text-sm font-semibold text-foreground">Aylık Emisyon Trendi</CardTitle>
+            <p className="text-xs text-muted-foreground">2025 yılı — hedef ile karşılaştırma</p>
+          </div>
+          <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+            <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-primary inline-block rounded" /> Gerçek</span>
+            <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-destructive inline-block rounded border-dashed" /> Hedef</span>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <ResponsiveContainer width="100%" height={200}>
+          <LineChart data={mockMonthlyTrend} margin={{ top: 4, right: 8, left: -10, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.22 0.03 255)" vertical={false} />
+            <XAxis
+              dataKey="ay"
+              tick={{ fontSize: 10, fill: "oklch(0.55 0.02 240)" }}
+              axisLine={false}
+              tickLine={false}
+            />
+            <YAxis
+              tick={{ fontSize: 10, fill: "oklch(0.55 0.02 240)" }}
+              axisLine={false}
+              tickLine={false}
+              tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}k`}
+            />
+            <Tooltip content={<CustomTooltip />} cursor={{ stroke: "oklch(0.35 0.03 255)", strokeWidth: 1 }} />
+            <ReferenceLine y={16000} stroke="#EF4444" strokeDasharray="5 3" strokeWidth={1.5} />
+            <Line
+              type="monotone"
+              dataKey="emisyon"
+              name="Gerçek Emisyon"
+              stroke="oklch(0.75 0.18 145)"
+              strokeWidth={2.5}
+              dot={{ fill: "oklch(0.75 0.18 145)", r: 3, strokeWidth: 0 }}
+              activeDot={{ r: 5, strokeWidth: 0 }}
+            />
+            <Line
+              type="monotone"
+              dataKey="hedef"
+              name="Hedef"
+              stroke="#EF4444"
+              strokeWidth={1.5}
+              strokeDasharray="5 3"
+              dot={false}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─── Emission Details Table ─────────────────────────────────────────────────────
+function EmissionTable() {
+  return (
+    <Card className="glass-card border-border">
+      <CardHeader className="pb-2">
+        <div className="flex items-start justify-between">
+          <div>
+            <CardTitle className="text-sm font-semibold text-foreground">Detaylı Emisyon Kırılımı</CardTitle>
+            <p className="text-xs text-muted-foreground">Kaynak, miktar, birim ve tCO₂e değerleri</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 text-[10px] text-yellow-400">
+              <span className="w-2 h-2 bg-yellow-500/40 rounded border border-yellow-500/50 inline-block" />
+              Anomali
+            </div>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="border-b border-border bg-muted/30">
+                <th className="text-left text-muted-foreground font-medium px-4 py-2.5">Emisyon Kaynağı</th>
+                <th className="text-right text-muted-foreground font-medium px-4 py-2.5">Miktar</th>
+                <th className="text-left text-muted-foreground font-medium px-4 py-2.5">Birim</th>
+                <th className="text-right text-muted-foreground font-medium px-4 py-2.5">kg CO₂</th>
+                <th className="text-right text-muted-foreground font-medium px-4 py-2.5">tCO₂e</th>
+                <th className="text-center text-muted-foreground font-medium px-4 py-2.5">Durum</th>
+              </tr>
+            </thead>
+            <tbody>
+              {mockEmissionDetails.map((row) => (
+                <tr
+                  key={row.id}
+                  className={cn(
+                    "border-b border-border/50 last:border-0 transition-colors",
+                    row.anomali
+                      ? "bg-yellow-500/5 hover:bg-yellow-500/10"
+                      : "hover:bg-accent/30"
+                  )}
+                >
+                  <td className="px-4 py-3 font-medium text-foreground">
+                    <div className="flex items-center gap-2">
+                      {row.anomali && <AlertTriangle className="w-3.5 h-3.5 text-yellow-400 flex-shrink-0" />}
+                      {row.kaynak}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-right tabular-nums text-foreground">
+                    {new Intl.NumberFormat("tr-TR").format(row.miktar)}
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground font-mono">{row.birim}</td>
+                  <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">
+                    {new Intl.NumberFormat("tr-TR").format(row.kgCO2)}
+                  </td>
+                  <td className="px-4 py-3 text-right tabular-nums font-semibold text-foreground">
+                    {fmt(row.tCO2e)}
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    {row.anomali ? (
+                      <div className="group relative inline-block">
+                        <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 text-[10px] cursor-help">
+                          Anomali
+                        </Badge>
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-card border border-yellow-500/30 rounded-lg p-2 text-[10px] text-foreground shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 text-left">
+                          <p className="font-semibold text-yellow-400 mb-1">⚠ Anomali Tespit Edildi</p>
+                          <p className="text-muted-foreground">{row.anomaliMesaj}</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <Badge className="bg-green-500/15 text-green-400 border-green-500/25 text-[10px]">
+                        Normal
+                      </Badge>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr className="bg-muted/20 border-t border-border">
+                <td className="px-4 py-3 font-semibold text-foreground" colSpan={4}>Toplam</td>
+                <td className="px-4 py-3 text-right tabular-nums font-bold text-foreground text-sm">
+                  {fmt(mockEmissionDetails.reduce((s, r) => s + r.tCO2e, 0))}
+                </td>
+                <td className="px-4 py-3" />
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─── CBAM Financial Impact ──────────────────────────────────────────────────────
+function MaliEtkiCard() {
+  return (
+    <Card className="glass-card border-border">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
+          <Euro className="w-4 h-4 text-primary" />
+          Mali Etki — CBAM Yükümlülüğü
+        </CardTitle>
+        <p className="text-xs text-muted-foreground">2025 Q1 dönemi · Faz: %{mockMaliEtki.cbamFazFaktoru}</p>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-2 gap-3 mb-5">
+          {[
+            { label: "CBAM Faz Faktörü", value: `%${mockMaliEtki.cbamFazFaktoru}`, sub: "2026 başlangıç oranı", color: "text-yellow-400" },
+            { label: "Brüt Vergi Yükümlülüğü", value: fmtEur(mockMaliEtki.brutVergi), sub: "Hesaplanan toplam", color: "text-red-400" },
+            { label: "Efektif Vergi", value: fmtEur(mockMaliEtki.efektifVergi), sub: "Krediler düşüldükten sonra", color: "text-orange-400" },
+            { label: "Çelik Başına Maliyet", value: `€${mockMaliEtki.celikBasinaMaliyet.toFixed(2)}/ton`, sub: `${fmt(mockMaliEtki.uretimMiktari)} ton üretim`, color: "text-foreground" },
+          ].map((item) => (
+            <div key={item.label} className="p-3 rounded-lg bg-muted/30 border border-border/50">
+              <p className="text-[10px] text-muted-foreground mb-1">{item.label}</p>
+              <p className={cn("text-base font-bold tabular-nums", item.color)}>{item.value}</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">{item.sub}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* CBAM Phase-in Timeline */}
+        <div>
+          <p className="text-xs font-semibold text-foreground mb-3 flex items-center gap-2">
+            <TrendingUp className="w-3.5 h-3.5 text-primary" />
+            CBAM Phase-in Takvimi (2026–2034)
+          </p>
+          <div className="relative">
+            <div className="absolute top-3.5 left-0 right-0 h-0.5 bg-border" />
+            <div className="flex items-start justify-between relative">
+              {mockCbamTimeline.map((item) => (
+                <div key={item.yil} className="flex flex-col items-center gap-1.5 relative">
+                  <div className={cn(
+                    "w-3 h-3 rounded-full border-2 z-10 transition-transform",
+                    item.aktif
+                      ? "bg-primary border-primary scale-125 shadow-[0_0_8px_oklch(0.75_0.18_145/0.6)]"
+                      : item.faz >= 50
+                      ? "bg-red-500/60 border-red-500"
+                      : "bg-muted border-border"
+                  )} />
+                  <p className={cn("text-[9px] font-bold tabular-nums mt-1", item.aktif ? "text-primary" : "text-muted-foreground")}>
+                    %{item.faz}
+                  </p>
+                  <p className={cn("text-[9px] tabular-nums", item.aktif ? "text-foreground font-medium" : "text-muted-foreground/60")}>
+                    {item.yil}
+                  </p>
+                  {item.aktif && (
+                    <Badge className="bg-primary/20 text-primary border-primary/30 text-[8px] px-1 py-0 absolute -bottom-5 whitespace-nowrap">
+                      Şu an
+                    </Badge>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─── Audit Trail ────────────────────────────────────────────────────────────────
+function AuditTrail() {
+  const [open, setOpen] = useState(false);
+  return (
+    <Card className="glass-card border-border">
+      <CardHeader className="pb-2">
+        <button
+          onClick={() => setOpen((o) => !o)}
+          className="flex items-center justify-between w-full text-left"
+        >
+          <div className="flex items-center gap-2">
+            <Clock className="w-4 h-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-semibold text-foreground">Audit Trail</CardTitle>
+            <Badge variant="secondary" className="text-[10px]">{mockAuditTrail.length} kayıt</Badge>
+          </div>
+          {open ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+        </button>
+      </CardHeader>
+      {open && (
+        <CardContent className="pt-0">
+          <div className="space-y-0">
+            {mockAuditTrail.map((item, i) => (
+              <div key={i} className="flex gap-3 relative pb-4 last:pb-0">
+                {i < mockAuditTrail.length - 1 && (
+                  <div className="absolute left-3.5 top-7 bottom-0 w-px bg-border" />
+                )}
+                <div className="w-7 h-7 rounded-full bg-muted border border-border flex items-center justify-center flex-shrink-0 z-10">
+                  {item.kullanici === "Sistem" ? (
+                    <Cpu className="w-3 h-3 text-primary" />
+                  ) : (
+                    <CheckCircle2 className="w-3 h-3 text-green-400" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0 pt-0.5">
+                  <div className="flex items-baseline gap-2 flex-wrap">
+                    <span className="text-xs font-semibold text-foreground">{item.islem}</span>
+                    <span className="text-[10px] text-muted-foreground">{fmtDate(item.timestamp)}</span>
+                    <Badge variant="secondary" className="text-[9px] px-1.5">{item.kullanici}</Badge>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">{item.detay}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      )}
+    </Card>
+  );
+}
+
+// ─── Page ───────────────────────────────────────────────────────────────────────
 export default function EmissionPage() {
-  const totalEmission = mockEmissionBreakdown.sources.reduce((acc, s) => acc + s.value, 0);
+  const anomalyCount = mockEmissionDetails.filter((r) => r.anomali).length;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Header */}
       <motion.div
-        initial={{ opacity: 0, x: -10 }}
-        animate={{ opacity: 1, x: 0 }}
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
         className="flex items-start justify-between"
       >
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Emisyon Analizi</h2>
+          <h2 className="text-xl font-bold text-foreground">Emisyon Analizi</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Ajan 2 çıkışı — 2025 1. Çeyrek · İzmir Çelik Fabrikası A.Ş.
+            Ajan 2 çıktısı — 2025 Q1 · İzmir Çelik Fabrikası A.Ş.
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" className="gap-2 text-xs border-yellow-500/30 text-yellow-400">
-            <AlertCircle className="w-3 h-3" />
-            2 Anomali Tespit Edildi
-          </Button>
-          <Button variant="outline" className="gap-2 text-xs">
-            <BarChart3 className="w-3 h-3" />
+        <div className="flex items-center gap-2">
+          {anomalyCount > 0 && (
+            <Badge className="bg-yellow-500/15 text-yellow-400 border-yellow-500/30 gap-1.5 px-3 py-1.5">
+              <AlertCircle className="w-3.5 h-3.5" />
+              {anomalyCount} Anomali Tespit Edildi
+            </Badge>
+          )}
+          <Badge className="bg-muted text-muted-foreground border-border gap-1.5 px-3 py-1.5">
+            <BarChart3 className="w-3.5 h-3.5" />
             124.850 tCO₂e Toplam
-          </Button>
+          </Badge>
         </div>
       </motion.div>
 
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Scope Breakdown Pie Chart */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.1 }}
-        >
-          <Card className="glass-card border-border">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-semibold text-foreground">Emisyon Kapsamı Dağılımı</CardTitle>
-              <p className="text-xs text-muted-foreground">Kapsam 1 / Kapsam 2 / Proses — tCO₂e</p>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-8">
-                <div className="w-48 h-48">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={[
-                          { name: "Kapsam 1 (Doğrudan)", value: mockEmissionBreakdown.scope1, color: "#F59E0B" },
-                          { name: "Scope 2 (Elektrik)", value: mockEmissionBreakdown.scope2, color: "#3B82F6" },
-                          { name: "Proses Emisyonları", value: mockEmissionBreakdown.process, color: "#8B5CF6" },
-                        ]}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={50}
-                        outerRadius={80}
-                        dataKey="value"
-                        stroke="none"
-                      >
-                        <Cell fill="#F59E0B" />
-                        <Cell fill="#3B82F6" />
-                        <Cell fill="#8B5CF6" />
-                      </Pie>
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-                <div className="space-y-3 flex-1">
-                  {[
-                    { name: "Kapsam 1 (Doğrudan)", value: mockEmissionBreakdown.scope1, color: "#F59E0B" },
-                    { name: "Scope 2 (Elektrik)", value: mockEmissionBreakdown.scope2, color: "#3B82F6" },
-                    { name: "Proses Emisyonları", value: mockEmissionBreakdown.process, color: "#8B5CF6" },
-                  ].map((item) => (
-                    <div key={item.name} className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
-                        <span className="text-xs text-muted-foreground">{item.name}</span>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-semibold text-foreground">{formatNumber(item.value)}</p>
-                        <p className="text-[10px] text-muted-foreground">
-                          % {((item.value / totalEmission) * 100).toFixed(1)}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                  <div className="pt-2 border-t border-border">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-foreground">Toplam</span>
-                      <span className="text-sm font-bold text-foreground">{formatNumber(totalEmission)} tCO₂e</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+      {/* Row 1: Pie + Bar charts */}
+      <div className="grid grid-cols-2 gap-4">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.05 }}>
+          <ScopePieChart />
         </motion.div>
-
-        {/* Source Bar Chart */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.15 }}
-        >
-          <Card className="glass-card border-border">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-semibold text-foreground">Emisyonlar</CardTitle>
-              <p className="text-xs text-muted-foreground">Kaynak bazlı kırılım — tCO₂e</p>
-            </CardHeader>
-            <CardContent>
-              <div className="h-52">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={mockEmissionBreakdown.sources} layout="horizontal">
-                    <XAxis dataKey="name" tick={{ fill: '#94a3b8', fontSize: 10 }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fill: '#94a3b8', fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v/1000}k`} />
-                    <Tooltip 
-                      contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px' }}
-                      labelStyle={{ color: '#f1f5f9' }}
-                      formatter={(value: number) => [formatNumber(value) + ' tCO₂e', '']}
-                    />
-                    <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                      {mockEmissionBreakdown.sources.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.1 }}>
+          <SourceBarChart />
         </motion.div>
       </div>
 
-      {/* Monthly Trend */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.2 }}
-      >
-        <Card className="glass-card border-border">
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-sm font-semibold text-foreground">Aylık Emisyon Trendi</CardTitle>
-                <p className="text-xs text-muted-foreground">2025 yılı — hedef ile karşılaştırma</p>
-              </div>
-              <div className="flex items-center gap-4 text-xs">
-                <div className="flex items-center gap-2">
-                  <span className="w-3 h-0.5 bg-green-400" />
-                  <span className="text-muted-foreground">Gerçek</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-3 h-0.5 bg-red-400 opacity-50" style={{ borderTop: '2px dashed' }} />
-                  <span className="text-muted-foreground">Hedef</span>
-                </div>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={mockMonthlyTrend}>
-                  <XAxis dataKey="ay" tick={{ fill: '#94a3b8', fontSize: 10 }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fill: '#94a3b8', fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v/1000}k`} />
-                  <Tooltip 
-                    contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px' }}
-                    labelStyle={{ color: '#f1f5f9' }}
-                    formatter={(value: number) => [formatNumber(value) + ' tCO₂e', '']}
-                  />
-                  <ReferenceLine y={16000} stroke="#ef4444" strokeDasharray="5 5" strokeOpacity={0.5} />
-                  <Line type="monotone" dataKey="emisyon" stroke="#22c55e" strokeWidth={2} dot={{ fill: '#22c55e', strokeWidth: 0, r: 4 }} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Row 2: Trend chart */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.15 }}>
+        <TrendChart />
       </motion.div>
 
-      {/* Detailed Emission Table */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.25 }}
-      >
-        <Card className="glass-card border-border">
-          <CardHeader className="pb-3 flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-sm font-semibold text-foreground">Detaylı Emisyon Kırılımı</CardTitle>
-              <p className="text-xs text-muted-foreground">Kaynak, miktar, birim ve tCO₂e değerleri</p>
-            </div>
-            <Button variant="outline" size="sm" className="gap-1 text-xs text-yellow-400 border-yellow-500/30">
-              <AlertTriangle className="w-3 h-3" />
-              Anormallikler
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="border-b border-border">
-                    <th className="text-left text-muted-foreground font-medium pb-2">Emisyon kaynağı</th>
-                    <th className="text-right text-muted-foreground font-medium pb-2">Miktar</th>
-                    <th className="text-left text-muted-foreground font-medium pb-2 pl-2">Birim</th>
-                    <th className="text-right text-muted-foreground font-medium pb-2">kg CO₂</th>
-                    <th className="text-right text-muted-foreground font-medium pb-2">tCO₂e</th>
-                    <th className="text-center text-muted-foreground font-medium pb-2">Durum</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {mockEmissionDetails.map((row) => (
-                    <tr key={row.id} className={cn(
-                      "border-b border-border/50 last:border-0",
-                      row.anomali && "bg-yellow-500/5"
-                    )}>
-                      <td className="py-3 text-foreground">
-                        <div className="flex items-center gap-2">
-                          {row.anomali && <AlertTriangle className="w-3 h-3 text-yellow-400" />}
-                          {row.kaynak}
-                        </div>
-                      </td>
-                      <td className="py-3 text-right text-foreground tabular-nums">{formatNumber(row.miktar)}</td>
-                      <td className="py-3 text-left text-muted-foreground pl-2">{row.birim}</td>
-                      <td className="py-3 text-right text-muted-foreground tabular-nums">{formatNumber(row.kgCO2)}</td>
-                      <td className="py-3 text-right text-foreground font-medium tabular-nums">{formatNumber(row.tCO2e)}</td>
-                      <td className="py-3 text-center">
-                        <Badge className={cn(
-                          "text-[10px] px-1.5",
-                          row.anomali 
-                            ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30" 
-                            : "bg-green-500/20 text-green-400 border-green-500/30"
-                        )}>
-                          {row.anomali ? "Anormallikler" : "Normal"}
-                        </Badge>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-                <tfoot>
-                  <tr className="border-t border-border">
-                    <td colSpan={4} className="py-3 text-foreground font-semibold">Toplam</td>
-                    <td className="py-3 text-right text-foreground font-bold tabular-nums">{formatNumber(totalEmission)}</td>
-                    <td></td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Row 3: Table */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.2 }}>
+        <EmissionTable />
       </motion.div>
 
-      {/* Mali Etki & Audit Trail */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Mali Etki */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.3 }}
-        >
-          <Card className="glass-card border-border">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <span className="text-lg">€</span>
-                Mali Etki — CBAM Yükümlülüğü
-              </CardTitle>
-              <p className="text-xs text-muted-foreground">2025 Q1 dönemi · Faz: % 2.5</p>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-3 rounded-lg bg-background/50 border border-border">
-                  <p className="text-xs text-muted-foreground">CBAM Faz Faktörü</p>
-                  <p className="text-xl font-bold text-yellow-400">%{mockMaliEtki.cbamFazFaktoru}</p>
-                  <p className="text-[10px] text-muted-foreground">2026 başlangıç oranı</p>
-                </div>
-                <div className="p-3 rounded-lg bg-background/50 border border-border">
-                  <p className="text-xs text-muted-foreground">Brüt Vergi Yükümlülüğü</p>
-                  <p className="text-xl font-bold text-red-400">{formatNumber(mockMaliEtki.brutVergi)} €</p>
-                  <p className="text-[10px] text-muted-foreground">Hesaplanan toplam</p>
-                </div>
-                <div className="p-3 rounded-lg bg-background/50 border border-border">
-                  <p className="text-xs text-muted-foreground">Etkin Vergi</p>
-                  <p className="text-xl font-bold text-orange-400">{formatNumber(mockMaliEtki.efektifVergi)} €</p>
-                  <p className="text-[10px] text-muted-foreground">Krediler düşüldükten sonra</p>
-                </div>
-                <div className="p-3 rounded-lg bg-background/50 border border-border">
-                  <p className="text-xs text-muted-foreground">Çelik Başına Maliyet</p>
-                  <p className="text-xl font-bold text-foreground">{mockMaliEtki.celikBasinaMaliyet} €/ton</p>
-                  <p className="text-[10px] text-muted-foreground">{formatNumber(mockMaliEtki.uretimMiktari)} ton üretim</p>
-                </div>
-              </div>
-
-              {/* CBAM Timeline */}
-              <div className="mt-6">
-                <p className="text-xs font-medium text-foreground mb-3">CBAM Aşamalı Takvimi (2026-2034)</p>
-                <div className="flex items-center gap-1">
-                  {mockCbamTimeline.map((item, i) => (
-                    <div key={item.yil} className="flex-1">
-                      <div 
-                        className={cn(
-                          "h-2 rounded-full",
-                          item.aktif ? "bg-green-500" : item.faz <= 47.5 ? "bg-border" : "bg-red-500/50"
-                        )}
-                      />
-                      <p className="text-[9px] text-muted-foreground mt-1 text-center">% {item.faz}</p>
-                      <p className="text-[9px] text-muted-foreground text-center">{item.yil}</p>
-                    </div>
-                  ))}
-                </div>
-                {mockCbamTimeline[0].aktif && (
-                  <Badge className="mt-2 bg-green-500/20 text-green-400 border-green-500/30 text-[10px]">
-                    Şu an
-                  </Badge>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+      {/* Row 4: Mali Etki + Audit */}
+      <div className="grid grid-cols-2 gap-4">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.25 }}>
+          <MaliEtkiCard />
         </motion.div>
-
-        {/* Audit Trail */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.35 }}
-        >
-          <Card className="glass-card border-border h-full">
-            <CardHeader className="pb-3 flex-row items-center justify-between">
-              <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <Info className="w-4 h-4" />
-                Denetim İzleme Kaydı
-              </CardTitle>
-              <Badge variant="outline" className="text-[10px]">{mockAuditTrail.length} kayıt</Badge>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {mockAuditTrail.map((item, i) => (
-                  <div key={i} className="flex gap-3 pb-3 border-b border-border/50 last:border-0 last:pb-0">
-                    <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="text-xs font-medium text-foreground">{item.islem}</p>
-                        <p className="text-[10px] text-muted-foreground flex-shrink-0">
-                          {new Date(item.timestamp).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
-                        </p>
-                      </div>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">{item.detay}</p>
-                      <p className="text-[10px] text-muted-foreground/70">{item.kullanici}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.3 }}>
+          <AuditTrail />
         </motion.div>
       </div>
     </div>
