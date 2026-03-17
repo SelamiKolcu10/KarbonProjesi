@@ -75,7 +75,9 @@
     "date": "Date",
     "emission": "Emission",
     "cbamTax": "CBAM Tax",
-    "compliance": "Compliance"
+    "compliance": "Compliance",
+    "trendUp": "↑ %{{value}} from last period",
+    "trendDown": "↓ %{{value}} from last period"
   },
   "notifications": {
     "title": "Notifications",
@@ -95,6 +97,7 @@
     "subtitle": "Upload a PDF or Excel factory document - Agent 1 will automatically start data extraction",
     "dragDrop": "Drag and drop file here",
     "selectFromComputer": "select from computer",
+    "orSelect": "or",
     "maxFileSize": "Max. file size: 50 MB",
     "processing": "Processing...",
     "successMessage": "Successfully processed",

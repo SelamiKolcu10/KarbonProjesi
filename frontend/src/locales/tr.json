@@ -75,7 +75,9 @@
     "date": "Tarih",
     "emission": "Emisyon",
     "cbamTax": "CBAM Vergisi",
-    "compliance": "Uyumluluk"
+    "compliance": "Uyumluluk",
+    "trendUp": "↑ %{{value}} geçen aya göre",
+    "trendDown": "↓ %{{value}} geçen aya göre"
   },
   "notifications": {
     "title": "Bildirimler",
@@ -95,6 +97,7 @@
     "subtitle": "PDF veya Excel fabrika belgesini yükleyin — Ajan 1 otomatik olarak veri çıkarımını başlatır",
     "dragDrop": "Dosyayı sürükleyip bırakın",
     "selectFromComputer": "bilgisayardan seçin",
+    "orSelect": "veya",
     "maxFileSize": "Maks. dosya boyutu: 50 MB",
     "processing": "İşleniyor...",
     "successMessage": "Başarıyla işlendi",

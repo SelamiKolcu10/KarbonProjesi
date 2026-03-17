@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { Upload, FileText, Table, File, Shield, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
@@ -46,6 +46,10 @@ export default function UploadPage() {
       }
       setUploadProgress(Math.min(Math.round(current), 90));
     }, 200);
+  }, [clearProgress]);
+
+  useEffect(() => {
+    return () => { clearProgress(); };
   }, [clearProgress]);
 
   const handleDragOver = (e: React.DragEvent) => {
