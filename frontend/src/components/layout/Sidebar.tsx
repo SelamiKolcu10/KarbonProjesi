@@ -11,6 +11,7 @@ import {
   Leaf,
   Bell,
   Target,
+  X,
 } from "lucide-react";
 import { mockNotifications } from "@/lib/mock-data";
 import { Badge } from "@/components/ui/badge";
@@ -24,14 +25,25 @@ const navItems = [
   { to: "/raporlar", label: "Geçmiş Raporlar", icon: FileText },
 ];
 
-export default function Sidebar() {
+interface SidebarProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const location = useLocation();
   const unreadCount = mockNotifications.filter((n) => !n.okundu).length;
 
   return (
-    <aside className="w-64 min-h-screen bg-sidebar border-r border-sidebar-border flex flex-col">
+    <aside
+      className={cn(
+        "w-64 min-h-screen bg-sidebar border-r border-sidebar-border flex flex-col",
+        "fixed md:static z-50 md:z-auto transition-transform duration-300 ease-in-out",
+        isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+      )}
+    >
       {/* Logo */}
-      <div className="p-6 border-b border-sidebar-border">
+      <div className="p-6 border-b border-sidebar-border flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-primary/20 border border-primary/30 flex items-center justify-center">
             <Factory className="w-5 h-5 text-primary" />
@@ -41,6 +53,13 @@ export default function Sidebar() {
             <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Karbon Yönetimi</p>
           </div>
         </div>
+        {/* Mobile close button */}
+        <button
+          onClick={onClose}
+          className="md:hidden p-1.5 rounded-lg hover:bg-accent transition-colors text-muted-foreground"
+        >
+          <X className="w-5 h-5" />
+        </button>
       </div>
 
       {/* Nav */}
@@ -52,6 +71,7 @@ export default function Sidebar() {
             <NavLink
               key={to}
               to={to}
+              onClick={onClose}
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
                 isActive
@@ -69,6 +89,7 @@ export default function Sidebar() {
           <p className="text-[10px] uppercase tracking-widest text-muted-foreground px-3 pb-2">Sistem</p>
           <NavLink
             to="/bildirimler"
+            onClick={onClose}
             className={cn(
               "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
               location.pathname === "/bildirimler"
@@ -86,6 +107,7 @@ export default function Sidebar() {
           </NavLink>
           <NavLink
             to="/ayarlar"
+            onClick={onClose}
             className={cn(
               "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
               location.pathname === "/ayarlar"

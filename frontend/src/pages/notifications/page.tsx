@@ -30,14 +30,28 @@ const notificationColors = {
   },
 };
 
+type FilterType = "all" | "critical" | "warning" | "info";
+
+const filterOptions: { value: FilterType; label: string }[] = [
+  { value: "all", label: "Tümü" },
+  { value: "critical", label: "Kritik" },
+  { value: "warning", label: "Uyarı" },
+  { value: "info", label: "Bilgi" },
+];
+
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState(mockNotifications);
+  const [filterType, setFilterType] = useState<FilterType>("all");
 
   const markAsRead = (id: number) => {
     setNotifications(prev => 
       prev.map(n => n.id === id ? { ...n, okundu: true } : n)
     );
   };
+
+  const filteredNotifications = filterType === "all"
+    ? notifications
+    : notifications.filter(n => n.tip === filterType);
 
   const unreadCount = notifications.filter(n => !n.okundu).length;
 
@@ -55,6 +69,42 @@ export default function NotificationsPage() {
         </p>
       </motion.div>
 
+      {/* Category Filter */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.05 }}
+        className="flex items-center gap-2"
+      >
+        {filterOptions.map((opt) => {
+          const isActive = filterType === opt.value;
+          const count = opt.value === "all"
+            ? notifications.length
+            : notifications.filter(n => n.tip === opt.value).length;
+
+          return (
+            <button
+              key={opt.value}
+              onClick={() => setFilterType(opt.value)}
+              className={cn(
+                "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all",
+                isActive
+                  ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                  : "bg-transparent text-muted-foreground border-border hover:bg-accent hover:text-foreground"
+              )}
+            >
+              {opt.label}
+              <span className={cn(
+                "text-[10px] tabular-nums px-1.5 py-0.5 rounded-full",
+                isActive ? "bg-primary-foreground/20" : "bg-muted"
+              )}>
+                {count}
+              </span>
+            </button>
+          );
+        })}
+      </motion.div>
+
       {/* Notifications List */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -63,7 +113,7 @@ export default function NotificationsPage() {
         className="max-w-2xl"
       >
         <div className="space-y-3">
-          {notifications.map((n, i) => {
+          {filteredNotifications.map((n, i) => {
             const colors = notificationColors[n.tip as keyof typeof notificationColors];
             const Icon = notificationIcons[n.tip as keyof typeof notificationIcons];
             
@@ -111,11 +161,11 @@ export default function NotificationsPage() {
           })}
         </div>
 
-        {notifications.length === 0 && (
+        {filteredNotifications.length === 0 && (
           <Card className="glass-card border-border">
             <CardContent className="p-12 text-center">
-              <Bell className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
-              <p className="text-muted-foreground">Bildirim bulunmuyor</p>
+              <Bell className="w-12 h-12 mx-auto text-muted-foreground/30 mb-4" />
+              <p className="text-sm text-muted-foreground">Bu kategoride bildirim bulunmuyor</p>
             </CardContent>
           </Card>
         )}

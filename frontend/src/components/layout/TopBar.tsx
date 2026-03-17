@@ -1,4 +1,4 @@
-import { Bell, Building2, ChevronDown, LogOut } from "lucide-react";
+import { Bell, Building2, ChevronDown, LogOut, Menu } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { mockNotifications } from "@/lib/mock-data";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,11 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
   "/bildirimler": { title: "Bildirimler", subtitle: "Uyarılar ve sistem mesajları" },
 };
 
-export default function TopBar() {
+interface TopBarProps {
+  onMenuClick?: () => void;
+}
+
+export default function TopBar({ onMenuClick }: TopBarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const pageInfo = pageTitles[location.pathname] ?? { title: "CBAM Yönetimi", subtitle: "" };
@@ -34,10 +38,21 @@ export default function TopBar() {
   }, []);
 
   return (
-    <header className="h-16 border-b border-border bg-card/50 backdrop-blur-sm flex items-center justify-between px-6 sticky top-0 z-10">
-      <div>
-        <h1 className="text-base font-semibold text-foreground">{pageInfo.title}</h1>
-        <p className="text-xs text-muted-foreground">{pageInfo.subtitle}</p>
+    <header className="h-16 border-b border-border bg-card/50 backdrop-blur-sm flex items-center justify-between px-4 md:px-6 sticky top-0 z-10">
+      <div className="flex items-center gap-3">
+        {/* Mobile hamburger */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="w-9 h-9 md:hidden"
+          onClick={onMenuClick}
+        >
+          <Menu className="w-5 h-5" />
+        </Button>
+        <div>
+          <h1 className="text-base font-semibold text-foreground">{pageInfo.title}</h1>
+          <p className="text-xs text-muted-foreground hidden sm:block">{pageInfo.subtitle}</p>
+        </div>
       </div>
 
       <div className="flex items-center gap-3">

@@ -76,12 +76,12 @@ function KpiCard({ title, value, unit, change, status, icon, delay = 0 }: KpiCar
           {change !== undefined && (
             <div className="flex items-center gap-1 mt-2">
               {change > 0 ? (
-                <TrendingUp className="w-3 h-3 text-destructive" />
+                <TrendingUp className="w-3.5 h-3.5 text-destructive" />
               ) : (
-                <TrendingDown className="w-3 h-3 text-green-400" />
+                <TrendingDown className="w-3.5 h-3.5 text-green-400" />
               )}
               <span className={cn("text-xs font-medium", change > 0 ? "text-destructive" : "text-green-400")}>
-                {change > 0 ? "+" : ""}{change}% önceki dönem
+                {change > 0 ? "↑" : "↓"} %{Math.abs(change)} geçen aya göre
               </span>
             </div>
           )}
@@ -163,6 +163,7 @@ export default function Dashboard() {
         <KpiCard
           title="Uyumluluk Durumu"
           value={complianceStatus === "compliant" ? "Uyumlu" : complianceStatus === "warning" ? "Dikkat" : "Uyumsuz"}
+          change={mockKpiData.complianceChange}
           status={complianceStatus === "compliant" ? "green" : complianceStatus === "warning" ? "yellow" : "red"}
           icon={complianceStatus === "compliant" ? <ShieldCheck className="w-4 h-4" /> : <ShieldAlert className="w-4 h-4" />}
           delay={0.15}

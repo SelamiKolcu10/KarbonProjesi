@@ -1,4 +1,5 @@
 import * as React from "react";
+import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 import { ChevronDown, Check } from "lucide-react";
 
@@ -14,7 +15,8 @@ interface SelectContextType {
   open: boolean;
   setOpen: (open: boolean) => void;
   registerItem: (value: string, text: string) => void;
-  itemMap: React.RefObject<Map<string, string>>;
+  itemMap: React.MutableRefObject<Map<string, string>>;
+  triggerRef: React.MutableRefObject<HTMLButtonElement | null>;
 }
 
 const SelectContext = React.createContext<SelectContextType>({
@@ -22,18 +24,20 @@ const SelectContext = React.createContext<SelectContextType>({
   setOpen: () => {},
   registerItem: () => {},
   itemMap: { current: new Map() },
+  triggerRef: { current: null },
 });
 
 function Select({ value, onValueChange, children }: SelectProps) {
   const [open, setOpen] = React.useState(false);
   const itemMap = React.useRef(new Map<string, string>());
+  const triggerRef = React.useRef<HTMLButtonElement | null>(null);
 
   const registerItem = React.useCallback((val: string, text: string) => {
     itemMap.current.set(val, text);
   }, []);
 
   const ctx = React.useMemo(
-    () => ({ value, onValueChange, open, setOpen, registerItem, itemMap }),
+    () => ({ value, onValueChange, open, setOpen, registerItem, itemMap, triggerRef }),
     [value, onValueChange, open, registerItem]
   );
 
@@ -51,9 +55,10 @@ function SelectTrigger({
   children,
   ...props
 }: React.ComponentProps<"button">) {
-  const { open, setOpen } = React.useContext(SelectContext);
+  const { open, setOpen, triggerRef } = React.useContext(SelectContext);
   return (
     <button
+      ref={triggerRef}
       type="button"
       onClick={() => setOpen(!open)}
       className={cn(
@@ -84,32 +89,50 @@ function SelectContent({
   children: React.ReactNode;
   className?: string;
 }) {
-  const { open, setOpen } = React.useContext(SelectContext);
+  const { open, setOpen, triggerRef } = React.useContext(SelectContext);
   const ref = React.useRef<HTMLDivElement>(null);
+  const [style, setStyle] = React.useState<React.CSSProperties>({});
+
+  React.useEffect(() => {
+    if (!open || !triggerRef.current) return;
+    const rect = triggerRef.current.getBoundingClientRect();
+    setStyle({
+      position: "fixed",
+      top: rect.bottom + 4,
+      left: rect.left,
+      width: rect.width,
+      zIndex: 9999,
+    });
+  }, [open, triggerRef]);
 
   React.useEffect(() => {
     if (!open) return;
     const handleClick = (e: MouseEvent) => {
-      if (ref.current && !ref.current.parentElement?.contains(e.target as Node)) {
+      if (
+        ref.current && !ref.current.contains(e.target as Node) &&
+        triggerRef.current && !triggerRef.current.contains(e.target as Node)
+      ) {
         setOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
-  }, [open, setOpen]);
+  }, [open, setOpen, triggerRef]);
 
   if (!open) return null;
 
-  return (
+  return createPortal(
     <div
       ref={ref}
+      style={style}
       className={cn(
-        "absolute z-50 mt-1 w-full min-w-[180px] rounded-xl border border-white/20 bg-[#111827] py-1 shadow-2xl shadow-black/40",
+        "min-w-[180px] rounded-xl border border-white/20 bg-[#111827] py-1 shadow-2xl shadow-black/40",
         className
       )}
     >
       {children}
-    </div>
+    </div>,
+    document.body
   );
 }
 

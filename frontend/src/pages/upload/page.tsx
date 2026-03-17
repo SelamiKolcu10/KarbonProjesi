@@ -2,8 +2,9 @@ import { motion } from "framer-motion";
 import { Upload, FileText, Table, File, Shield, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 export default function UploadPage() {
   const [isDragging, setIsDragging] = useState(false);
@@ -18,6 +19,32 @@ export default function UploadPage() {
     columnLanguage?: string;
     extractionMode?: string;
   }>({});
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const progressInterval = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
+
+  const clearProgress = useCallback(() => {
+    if (progressInterval.current) {
+      clearInterval(progressInterval.current);
+      progressInterval.current = null;
+    }
+  }, []);
+
+  const startProgress = useCallback(() => {
+    clearProgress();
+    setUploadProgress(0);
+    let current = 0;
+    progressInterval.current = setInterval(() => {
+      current += Math.random() * 8 + 2;
+      if (current >= 90) {
+        current = 90;
+        clearInterval(progressInterval.current!);
+        progressInterval.current = null;
+      }
+      setUploadProgress(Math.min(Math.round(current), 90));
+    }, 200);
+  }, [clearProgress]);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -45,6 +72,14 @@ export default function UploadPage() {
   };
 
   const handleFile = async (file: File) => {
+    // Client-side file size validation
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error("Dosya boyutu 50 MB limitini aşıyor!", {
+        description: `Seçilen dosya: ${(file.size / 1024 / 1024).toFixed(1)} MB`,
+      });
+      return;
+    }
+
     setUploadedFile(file);
     setIsProcessing(true);
     setUploadStatus("uploading");
@@ -52,6 +87,7 @@ export default function UploadPage() {
     setJsonPreview(null);
     setFileDeleted(false);
     setExtractionInfo({});
+    startProgress();
 
     try {
       const formData = new FormData();
@@ -68,6 +104,8 @@ export default function UploadPage() {
       }
 
       const data = await response.json();
+      clearProgress();
+      setUploadProgress(100);
       setUploadStatus("success");
       setFileDeleted(data.file_deleted || false);
 
@@ -87,6 +125,8 @@ export default function UploadPage() {
         extractionMode: data.extraction_mode,
       });
     } catch (err: any) {
+      clearProgress();
+      setUploadProgress(0);
       setUploadStatus("error");
       setErrorMessage(err.message || "Dosya yükleme hatası");
       setJsonPreview(null);
@@ -183,10 +223,23 @@ export default function UploadPage() {
                       <p className="font-medium text-foreground">{uploadedFile.name}</p>
                       <p className="text-xs text-muted-foreground">
                         {(uploadedFile.size / 1024 / 1024).toFixed(2)} MB
-                        {isProcessing && " — İşleniyor..."}
                         {uploadStatus === "success" && " — ✅ Başarıyla işlendi"}
                         {uploadStatus === "error" && ` — ❌ ${errorMessage}`}
                       </p>
+                      {uploadStatus === "uploading" && (
+                        <div className="mt-2">
+                          <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+                            <span>İşleniyor...</span>
+                            <span>%{uploadProgress}</span>
+                          </div>
+                          <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-primary rounded-full transition-all duration-300 ease-out"
+                              style={{ width: `${uploadProgress}%` }}
+                            />
+                          </div>
+                        </div>
+                      )}
                     </div>
                     {fileDeleted && (
                       <Badge variant="outline" className="text-xs text-green-500 border-green-500/30">

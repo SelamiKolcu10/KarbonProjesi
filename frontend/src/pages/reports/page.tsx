@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -478,6 +478,8 @@ export default function ReportsPage() {
   const [filterTesis, setFilterTesis] = useState<string>("all");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const uniqueTesisler = useMemo(
     () => Array.from(new Set(mockGeçmisRaporlar.map((r) => r.tesis))),
@@ -495,7 +497,18 @@ export default function ReportsPage() {
     });
   }, [search, filterCompliance, filterTesis, dateFrom, dateTo]);
 
-  const hasFilters = search || filterCompliance !== "all" || filterTesis !== "all" || dateFrom || dateTo;
+  // Reset to page 1 when filters change
+  const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
+  const paginatedData = filtered.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, filterCompliance, filterTesis, dateFrom, dateTo]);
+
+  const hasFilters= search || filterCompliance !== "all" || filterTesis !== "all" || dateFrom || dateTo;
 
   const clearFilters = () => {
     setSearch("");
@@ -696,7 +709,7 @@ export default function ReportsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((report) => (
+                  {paginatedData.map((report) => (
                     <ReportRow
                       key={report.id}
                       report={report}
@@ -705,6 +718,38 @@ export default function ReportsPage() {
                   ))}
                 </tbody>
               </table>
+
+              {/* Pagination */}
+              {filtered.length > itemsPerPage && (
+                <div className="flex items-center justify-between px-4 py-3 border-t border-border/50">
+                  <p className="text-xs text-muted-foreground">
+                    {filtered.length} kayıttan {(currentPage - 1) * itemsPerPage + 1}–{Math.min(currentPage * itemsPerPage, filtered.length)} arası gösteriliyor
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 px-3 text-xs"
+                      disabled={currentPage <= 1}
+                      onClick={() => setCurrentPage((p) => p - 1)}
+                    >
+                      Önceki
+                    </Button>
+                    <span className="text-xs text-muted-foreground tabular-nums px-2">
+                      Sayfa {currentPage} / {totalPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 px-3 text-xs"
+                      disabled={currentPage >= totalPages}
+                      onClick={() => setCurrentPage((p) => p + 1)}
+                    >
+                      Sonraki
+                    </Button>
+                  </div>
+                </div>
+              )}
             )}
           </CardContent>
         </Card>

@@ -1,4 +1,5 @@
 {
+  "$schema": "https://json.schemastore.org/package.json",
   "devDependencies": {
     "@cspell/dict-tr-tr": "^3.0.6"
   }
