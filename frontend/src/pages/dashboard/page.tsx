@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import {
   Wind,
@@ -38,9 +39,10 @@ type KpiCardProps = {
   status: "green" | "yellow" | "red";
   icon: React.ReactNode;
   delay?: number;
+  t: (key: string, options?: Record<string, unknown>) => string;
 };
 
-function KpiCard({ title, value, unit, change, status, icon, delay = 0 }: KpiCardProps) {
+function KpiCard({ title, value, unit, change, status, icon, delay = 0, t }: KpiCardProps) {
   const statusColors = {
     green: { border: "border-green-500/30", glow: "shadow-green-500/10", badge: "bg-green-500/15 text-green-400", dot: "bg-green-400" },
     yellow: { border: "border-yellow-500/30", glow: "shadow-yellow-500/10", badge: "bg-yellow-500/15 text-yellow-400", dot: "bg-yellow-400" },
@@ -65,7 +67,7 @@ function KpiCard({ title, value, unit, change, status, icon, delay = 0 }: KpiCar
             </div>
             <div className={cn("flex items-center gap-1.5 text-xs px-2 py-0.5 rounded-full", c.badge)}>
               <span className={cn("w-1.5 h-1.5 rounded-full", c.dot)} />
-              {status === "green" ? "Normal" : status === "yellow" ? "Dikkat" : "Kritik"}
+              {status === "green" ? t("common.normal") : status === "yellow" ? t("common.attention") : t("common.critical")}
             </div>
           </div>
           <p className="text-xs text-muted-foreground mb-1">{title}</p>
@@ -81,7 +83,7 @@ function KpiCard({ title, value, unit, change, status, icon, delay = 0 }: KpiCar
                 <TrendingDown className="w-3.5 h-3.5 text-green-400" />
               )}
               <span className={cn("text-xs font-medium", change > 0 ? "text-destructive" : "text-green-400")}>
-                {change > 0 ? "↑" : "↓"} %{Math.abs(change)} geçen aya göre
+                {t(change > 0 ? "dashboard.trendUp" : "dashboard.trendDown", { value: Math.abs(change) })}
               </span>
             </div>
           )}
@@ -104,6 +106,7 @@ const notificationBg = {
 };
 
 export default function Dashboard() {
+  const { t } = useTranslation();
   const complianceStatus = mockKpiData.complianceStatus;
 
   return (
@@ -116,18 +119,18 @@ export default function Dashboard() {
         className="flex items-start justify-between"
       >
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Genel Bakış</h2>
+          <h2 className="text-2xl font-bold text-foreground">{t("dashboard.overview")}</h2>
           <div className="flex items-center gap-2 mt-1">
             <Clock className="w-3.5 h-3.5 text-muted-foreground" />
             <span className="text-xs text-muted-foreground">
-              Son denetim: {formatDate(mockKpiData.lastAuditDate)} — <span className="text-foreground/70">{mockKpiData.lastDocument}</span>
+              {t("dashboard.lastAudit")}: {formatDate(mockKpiData.lastAuditDate)} — <span className="text-foreground/70">{mockKpiData.lastDocument}</span>
             </span>
           </div>
         </div>
         <Link to="/belge-yukle">
           <Button className="gap-2 text-sm">
             <FileText className="w-4 h-4" />
-            Yeni Belge Yükle
+            {t("dashboard.newDocument")}
           </Button>
         </Link>
       </motion.div>
@@ -135,38 +138,42 @@ export default function Dashboard() {
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard
-          title="Toplam Emisyon"
+          title={t("dashboard.totalEmission")}
           value={formatNumber(mockKpiData.totalEmission)}
           unit="tCO₂e"
           change={mockKpiData.totalEmissionChange}
           status="red"
           icon={<Wind className="w-4 h-4" />}
           delay={0}
+          t={t}
         />
         <KpiCard
-          title="Tahmini CBAM Vergisi"
+          title={t("dashboard.estimatedCbamTax")}
           value={formatCurrency(mockKpiData.cbamTax)}
           change={mockKpiData.cbamTaxChange}
           status="red"
           icon={<Euro className="w-4 h-4" />}
           delay={0.05}
+          t={t}
         />
         <KpiCard
-          title="Emisyon Yoğunluğu"
+          title={t("dashboard.emissionIntensity")}
           value={mockKpiData.emissionIntensity.toFixed(2)}
           unit="tCO₂/ton çelik"
           change={mockKpiData.emissionIntensityChange}
           status="yellow"
           icon={<BarChart3 className="w-4 h-4" />}
           delay={0.1}
+          t={t}
         />
         <KpiCard
-          title="Uyumluluk Durumu"
-          value={complianceStatus === "compliant" ? "Uyumlu" : complianceStatus === "warning" ? "Dikkat" : "Uyumsuz"}
+          title={t("dashboard.complianceStatus")}
+          value={complianceStatus === "compliant" ? t("common.compliant") : complianceStatus === "warning" ? t("common.attention") : t("common.nonCompliant")}
           change={mockKpiData.complianceChange}
           status={complianceStatus === "compliant" ? "green" : complianceStatus === "warning" ? "yellow" : "red"}
           icon={complianceStatus === "compliant" ? <ShieldCheck className="w-4 h-4" /> : <ShieldAlert className="w-4 h-4" />}
           delay={0.15}
+          t={t}
         />
       </div>
 
@@ -180,7 +187,7 @@ export default function Dashboard() {
         >
           <Card className="glass-card border-border h-full">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-semibold text-foreground">Risk Skoru</CardTitle>
+              <CardTitle className="text-sm font-semibold text-foreground">{t("dashboard.riskScore")}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex flex-col items-center">
@@ -207,11 +214,11 @@ export default function Dashboard() {
                   </svg>
                 </div>
                 <div className="flex items-center justify-between w-full text-xs text-muted-foreground px-2">
-                  <span>Düşük</span>
-                  <Badge className="bg-red-500/20 text-red-400 border-red-500/30 text-xs">YÜKSEK RİSK</Badge>
-                  <span>Yüksek</span>
+                  <span>{t("dashboard.riskLow")}</span>
+                  <Badge className="bg-red-500/20 text-red-400 border-red-500/30 text-xs">{t("dashboard.highRisk")}</Badge>
+                  <span>{t("dashboard.riskHigh")}</span>
                 </div>
-                <p className="text-xs text-muted-foreground text-center mt-2">CBAM uyumluluk riski — Ajan 3 değerlendirmesi</p>
+                <p className="text-xs text-muted-foreground text-center mt-2">{t("dashboard.riskDescription")}</p>
               </div>
             </CardContent>
           </Card>
@@ -225,15 +232,15 @@ export default function Dashboard() {
         >
           <Card className="glass-card border-border h-full">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-semibold text-foreground">CBAM Mali Özet</CardTitle>
+              <CardTitle className="text-sm font-semibold text-foreground">{t("dashboard.cbamFinancialSummary")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               {[
-                { label: "CBAM Faz Faktörü (2026)", value: "%2,5", color: "text-yellow-400" },
-                { label: "Brüt Vergi Yükümlülüğü", value: "€187.275", color: "text-red-400" },
-                { label: "Efektif Vergi (Krediler hariç)", value: "€156.400", color: "text-orange-400" },
-                { label: "Çelik Başına Maliyet", value: "€2,13/ton", color: "text-foreground" },
-                { label: "Üretim Miktarı", value: "87.900 ton", color: "text-foreground" },
+                { label: t("dashboard.cbamPhaseFactor"), value: "%2,5", color: "text-yellow-400" },
+                { label: t("dashboard.grossTaxLiability"), value: "€187.275", color: "text-red-400" },
+                { label: t("dashboard.effectiveTax"), value: "€156.400", color: "text-orange-400" },
+                { label: t("dashboard.costPerTonSteel"), value: "€2,13/ton", color: "text-foreground" },
+                { label: t("dashboard.productionQuantity"), value: "87.900 ton", color: "text-foreground" },
               ].map((item) => (
                 <div key={item.label} className="flex items-center justify-between py-1.5 border-b border-border/50 last:border-0">
                   <span className="text-xs text-muted-foreground">{item.label}</span>
@@ -252,10 +259,10 @@ export default function Dashboard() {
         >
           <Card className="glass-card border-border h-full">
             <CardHeader className="pb-3 flex-row items-center justify-between">
-              <CardTitle className="text-sm font-semibold text-foreground">Sonslar</CardTitle>
+              <CardTitle className="text-sm font-semibold text-foreground">{t("dashboard.recentNotifications")}</CardTitle>
               <Link to="/bildirimler">
                 <Button variant="ghost" size="sm" className="text-xs h-6 px-2 text-muted-foreground hover:text-foreground">
-                  Tümü <ChevronRight className="w-3 h-3 ml-1" />
+                  {t("dashboard.viewAll")} <ChevronRight className="w-3 h-3 ml-1" />
                 </Button>
               </Link>
             </CardHeader>
@@ -288,10 +295,10 @@ export default function Dashboard() {
       >
         <Card className="glass-card border-border">
           <CardHeader className="pb-3 flex-row items-center justify-between">
-            <CardTitle className="text-sm font-semibold text-foreground">Son Denetimler</CardTitle>
+            <CardTitle className="text-sm font-semibold text-foreground">{t("dashboard.recentAudits")}</CardTitle>
             <Link to="/raporlar">
               <Button variant="ghost" size="sm" className="text-xs h-6 px-2 text-muted-foreground hover:text-foreground">
-                Tüm raporlar <ChevronRight className="w-3 h-3 ml-1" />
+                {t("dashboard.allReports")} <ChevronRight className="w-3 h-3 ml-1" />
               </Button>
             </Link>
           </CardHeader>
@@ -300,11 +307,11 @@ export default function Dashboard() {
               <table className="w-full text-xs">
                 <thead>
                   <tr className="border-b border-border">
-                    <th className="text-left text-muted-foreground font-medium pb-2">Tesis</th>
-                    <th className="text-left text-muted-foreground font-medium pb-2">Tarih</th>
-                    <th className="text-right text-muted-foreground font-medium pb-2">Emisyon</th>
-                    <th className="text-right text-muted-foreground font-medium pb-2">CBAM Vergisi</th>
-                    <th className="text-center text-muted-foreground font-medium pb-2">Uyumluluk</th>
+                    <th className="text-left text-muted-foreground font-medium pb-2">{t("dashboard.facility")}</th>
+                    <th className="text-left text-muted-foreground font-medium pb-2">{t("dashboard.date")}</th>
+                    <th className="text-right text-muted-foreground font-medium pb-2">{t("dashboard.emission")}</th>
+                    <th className="text-right text-muted-foreground font-medium pb-2">{t("dashboard.cbamTax")}</th>
+                    <th className="text-center text-muted-foreground font-medium pb-2">{t("dashboard.compliance")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -320,7 +327,7 @@ export default function Dashboard() {
                           r.uyumluluk === "warning" ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30" :
                           "bg-red-500/20 text-red-400 border-red-500/30"
                         )}>
-                          {r.uyumluluk === "compliant" ? "Uyumlu" : r.uyumluluk === "warning" ? "Dikkat" : "Uyumsuz"}
+                          {r.uyumluluk === "compliant" ? t("common.compliant") : r.uyumluluk === "warning" ? t("common.attention") : t("common.nonCompliant")}
                         </Badge>
                       </td>
                     </tr>

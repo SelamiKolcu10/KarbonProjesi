@@ -1,4 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
@@ -16,23 +17,24 @@ import {
 import { mockNotifications } from "@/lib/mock-data";
 import { Badge } from "@/components/ui/badge";
 
-const navItems = [
-  { to: "/", label: "Kontrol Paneli", icon: LayoutDashboard },
-  { to: "/belge-yukle", label: "Belge Yükle", icon: Upload },
-  { to: "/emisyon-analizi", label: "Emisyon Analizi", icon: FlaskConical },
-  { to: "/emisyon-projeksiyonu", label: "Emisyon Projeksiyonu", icon: Target },
-  { to: "/strateji-raporu", label: "Strateji Raporu", icon: BrainCircuit },
-  { to: "/raporlar", label: "Geçmiş Raporlar", icon: FileText },
-];
-
 interface SidebarProps {
   isOpen?: boolean;
   onClose?: () => void;
 }
 
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
+  const { t } = useTranslation();
   const location = useLocation();
   const unreadCount = mockNotifications.filter((n) => !n.okundu).length;
+
+  const navItems = [
+    { to: "/", label: t("nav.dashboard"), icon: LayoutDashboard },
+    { to: "/belge-yukle", label: t("nav.upload"), icon: Upload },
+    { to: "/emisyon-analizi", label: t("nav.emission"), icon: FlaskConical },
+    { to: "/emisyon-projeksiyonu", label: t("nav.projection"), icon: Target },
+    { to: "/strateji-raporu", label: t("nav.strategy"), icon: BrainCircuit },
+    { to: "/raporlar", label: t("nav.reports"), icon: FileText },
+  ];
 
   return (
     <aside
@@ -50,7 +52,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           </div>
           <div>
             <p className="font-bold text-sm text-foreground tracking-wide">CBAM</p>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Karbon Yönetimi</p>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-widest">{t("nav.carbonManagement")}</p>
           </div>
         </div>
         {/* Mobile close button */}
@@ -64,7 +66,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
       {/* Nav */}
       <nav className="flex-1 p-4 space-y-1">
-        <p className="text-[10px] uppercase tracking-widest text-muted-foreground px-3 pb-2 pt-1">Navigasyon</p>
+        <p className="text-[10px] uppercase tracking-widest text-muted-foreground px-3 pb-2 pt-1">{t("nav.navigation")}</p>
         {navItems.map(({ to, label, icon: Icon }) => {
           const isActive = to === "/" ? location.pathname === "/" : location.pathname.startsWith(to);
           return (
@@ -86,7 +88,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         })}
 
         <div className="pt-4">
-          <p className="text-[10px] uppercase tracking-widest text-muted-foreground px-3 pb-2">Sistem</p>
+          <p className="text-[10px] uppercase tracking-widest text-muted-foreground px-3 pb-2">{t("nav.system")}</p>
           <NavLink
             to="/bildirimler"
             onClick={onClose}
@@ -98,7 +100,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             )}
           >
             <Bell className="w-4 h-4 flex-shrink-0" />
-            Bildirimler
+            {t("nav.notifications")}
             {unreadCount > 0 && (
               <Badge className="ml-auto bg-destructive text-white text-[10px] px-1.5 py-0 min-w-[18px] h-[18px] flex items-center justify-center">
                 {unreadCount}
@@ -116,7 +118,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             )}
           >
             <Settings className="w-4 h-4 flex-shrink-0" />
-            Ayarlar
+            {t("nav.settings")}
           </NavLink>
         </div>
       </nav>
@@ -126,8 +128,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/10 border border-primary/20">
           <Leaf className="w-4 h-4 text-primary" />
           <div>
-            <p className="text-[11px] font-semibold text-primary">CBAM 2026</p>
-            <p className="text-[10px] text-muted-foreground">Faz: %2.5 aktif</p>
+            <p className="text-[11px] font-semibold text-primary">{t("nav.cbam2026")}</p>
+            <p className="text-[10px] text-muted-foreground">{t("nav.phaseActive")}</p>
           </div>
         </div>
       </div>

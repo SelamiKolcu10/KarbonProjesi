@@ -1,7 +1,11 @@
-# Ortam değişkenleri
+# ========================
+# Environment
+# ========================
 .env
 
+# ========================
 # Python
+# ========================
 __pycache__/
 *.py[cod]
 *$py.class
@@ -13,8 +17,8 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
+/lib/
+/lib64/
 parts/
 sdist/
 var/
@@ -22,6 +26,7 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+.pytest_cache/
 
 # Virtual Environment
 venv/
@@ -29,31 +34,41 @@ env/
 ENV/
 .venv/
 
+# ========================
+# Node / Frontend
+# ========================
+node_modules/
+package-lock.json
+frontend/dist/
+frontend/tsconfig.tsbuildinfo
+frontend/tsconfig.node.tsbuildinfo
+frontend/vite.config.d.ts
+
+# ========================
 # IDE
+# ========================
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
 
-# Logs
+# ========================
+# Runtime / Generated
+# ========================
 logs/
 *.log
-
-# Output
 output/
-
-# Cache
 cache/
 
-# Node
-node_modules/
-package-lock.json
-
+# ========================
 # OS
+# ========================
 .DS_Store
 Thumbs.db
 
+# ========================
 # Temporary files
+# ========================
 *.tmp
 *.temp

@@ -27,6 +27,7 @@ import {
   BarChart3,
 } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -66,20 +67,20 @@ function CustomTooltip({ active, payload, label }: { active?: boolean; payload?:
 }
 
 // ─── Scope Pie Chart ────────────────────────────────────────────────────────────
-const SCOPE_DATA = [
-  { name: "Scope 1 (Doğrudan)", value: mockEmissionBreakdown.scope1, color: "#F59E0B" },
-  { name: "Scope 2 (Elektrik)", value: mockEmissionBreakdown.scope2, color: "#3B82F6" },
-  { name: "Proses Emisyonları",  value: mockEmissionBreakdown.process, color: "#8B5CF6" },
-];
-const TOTAL = SCOPE_DATA.reduce((s, d) => s + d.value, 0);
-
 function ScopePieChart() {
+  const { t } = useTranslation();
   const [active, setActive] = useState<number | null>(null);
+  const SCOPE_DATA = [
+    { name: t("emission.scope1"), value: mockEmissionBreakdown.scope1, color: "#F59E0B" },
+    { name: t("emission.scope2"), value: mockEmissionBreakdown.scope2, color: "#3B82F6" },
+    { name: t("emission.processEmissions"),  value: mockEmissionBreakdown.process, color: "#8B5CF6" },
+  ];
+  const TOTAL = SCOPE_DATA.reduce((s, d) => s + d.value, 0);
   return (
     <Card className="glass-card border-border">
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-semibold text-foreground">Emisyon Kapsamı Dağılımı</CardTitle>
-        <p className="text-xs text-muted-foreground">Scope 1 / Scope 2 / Proses — tCO₂e</p>
+        <CardTitle className="text-sm font-semibold text-foreground">{t("emission.scopeDistribution")}</CardTitle>
+        <p className="text-xs text-muted-foreground">{t("emission.scopeSubtitle")} — tCO₂e</p>
       </CardHeader>
       <CardContent>
         <div className="flex items-center gap-4">
@@ -140,7 +141,7 @@ function ScopePieChart() {
               </div>
             ))}
             <div className="flex items-center justify-between pt-1 border-t border-border px-2">
-              <span className="text-xs text-muted-foreground font-medium">Toplam</span>
+              <span className="text-xs text-muted-foreground font-medium">{t("common.total")}</span>
               <span className="text-xs font-bold text-foreground tabular-nums">{fmt(TOTAL)} tCO₂e</span>
             </div>
           </div>
@@ -152,11 +153,12 @@ function ScopePieChart() {
 
 // ─── Source Bar Chart ───────────────────────────────────────────────────────────
 function SourceBarChart() {
+  const { t } = useTranslation();
   return (
     <Card className="glass-card border-border">
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-semibold text-foreground">Emisyon Kaynakları</CardTitle>
-        <p className="text-xs text-muted-foreground">Kaynak bazlı kırılım — tCO₂e</p>
+        <CardTitle className="text-sm font-semibold text-foreground">{t("emission.emissionSources")}</CardTitle>
+        <p className="text-xs text-muted-foreground">{t("emission.sourceBreakdown")} — tCO₂e</p>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={200}>
@@ -189,17 +191,18 @@ function SourceBarChart() {
 
 // ─── Monthly Trend ──────────────────────────────────────────────────────────────
 function TrendChart() {
+  const { t } = useTranslation();
   return (
     <Card className="glass-card border-border">
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between">
           <div>
-            <CardTitle className="text-sm font-semibold text-foreground">Aylık Emisyon Trendi</CardTitle>
-            <p className="text-xs text-muted-foreground">2025 yılı — hedef ile karşılaştırma</p>
+            <CardTitle className="text-sm font-semibold text-foreground">{t("emission.monthlyTrend")}</CardTitle>
+            <p className="text-xs text-muted-foreground">{t("emission.monthlyTrendSubtitle")}</p>
           </div>
           <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
-            <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-primary inline-block rounded" /> Gerçek</span>
-            <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-destructive inline-block rounded border-dashed" /> Hedef</span>
+            <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-primary inline-block rounded" /> {t("emission.actual")}</span>
+            <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-destructive inline-block rounded border-dashed" /> {t("emission.target")}</span>
           </div>
         </div>
       </CardHeader>
@@ -224,7 +227,7 @@ function TrendChart() {
             <Line
               type="monotone"
               dataKey="emisyon"
-              name="Gerçek Emisyon"
+              name={t("emission.actualEmission")}
               stroke="oklch(0.75 0.18 145)"
               strokeWidth={2.5}
               dot={{ fill: "oklch(0.75 0.18 145)", r: 3, strokeWidth: 0 }}
@@ -233,7 +236,7 @@ function TrendChart() {
             <Line
               type="monotone"
               dataKey="hedef"
-              name="Hedef"
+              name={t("emission.target")}
               stroke="#EF4444"
               strokeWidth={1.5}
               strokeDasharray="5 3"
@@ -248,13 +251,14 @@ function TrendChart() {
 
 // ─── Emission Details Table ─────────────────────────────────────────────────────
 function EmissionTable() {
+  const { t } = useTranslation();
   return (
     <Card className="glass-card border-border">
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between">
           <div>
-            <CardTitle className="text-sm font-semibold text-foreground">Detaylı Emisyon Kırılımı</CardTitle>
-            <p className="text-xs text-muted-foreground">Kaynak, miktar, birim ve tCO₂e değerleri</p>
+            <CardTitle className="text-sm font-semibold text-foreground">{t("emission.detailedBreakdown")}</CardTitle>
+            <p className="text-xs text-muted-foreground">{t("emission.detailedBreakdownSubtitle")}</p>
           </div>
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1.5 text-[10px] text-yellow-400">
@@ -269,9 +273,9 @@ function EmissionTable() {
           <table className="w-full text-xs">
             <thead>
               <tr className="border-b border-border bg-muted/30">
-                <th className="text-left text-muted-foreground font-medium px-4 py-2.5">Emisyon Kaynağı</th>
-                <th className="text-right text-muted-foreground font-medium px-4 py-2.5">Miktar</th>
-                <th className="text-left text-muted-foreground font-medium px-4 py-2.5">Birim</th>
+                <th className="text-left text-muted-foreground font-medium px-4 py-2.5">{t("emission.emissionSource")}</th>
+                <th className="text-right text-muted-foreground font-medium px-4 py-2.5">{t("emission.quantity")}</th>
+                <th className="text-left text-muted-foreground font-medium px-4 py-2.5">{t("emission.unit")}</th>
                 <th className="text-right text-muted-foreground font-medium px-4 py-2.5">kg CO₂</th>
                 <th className="text-right text-muted-foreground font-medium px-4 py-2.5">tCO₂e</th>
                 <th className="text-center text-muted-foreground font-medium px-4 py-2.5">Durum</th>
@@ -326,7 +330,7 @@ function EmissionTable() {
             </tbody>
             <tfoot>
               <tr className="bg-muted/20 border-t border-border">
-                <td className="px-4 py-3 font-semibold text-foreground" colSpan={4}>Toplam</td>
+                <td className="px-4 py-3 font-semibold text-foreground" colSpan={4}>{t("common.total")}</td>
                 <td className="px-4 py-3 text-right tabular-nums font-bold text-foreground text-sm">
                   {fmt(mockEmissionDetails.reduce((s, r) => s + r.tCO2e, 0))}
                 </td>
@@ -342,22 +346,23 @@ function EmissionTable() {
 
 // ─── CBAM Financial Impact ──────────────────────────────────────────────────────
 function MaliEtkiCard() {
+  const { t } = useTranslation();
   return (
     <Card className="glass-card border-border">
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
           <Euro className="w-4 h-4 text-primary" />
-          Mali Etki — CBAM Yükümlülüğü
+          {t("emission.financialImpact")}
         </CardTitle>
-        <p className="text-xs text-muted-foreground">2025 Q1 dönemi · Faz: %{mockMaliEtki.cbamFazFaktoru}</p>
+        <p className="text-xs text-muted-foreground">{t("emission.financialImpactSubtitle")}</p>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-2 gap-3 mb-5">
           {[
-            { label: "CBAM Faz Faktörü", value: `%${mockMaliEtki.cbamFazFaktoru}`, sub: "2026 başlangıç oranı", color: "text-yellow-400" },
-            { label: "Brüt Vergi Yükümlülüğü", value: fmtEur(mockMaliEtki.brutVergi), sub: "Hesaplanan toplam", color: "text-red-400" },
-            { label: "Efektif Vergi", value: fmtEur(mockMaliEtki.efektifVergi), sub: "Krediler düşüldükten sonra", color: "text-orange-400" },
-            { label: "Çelik Başına Maliyet", value: `€${mockMaliEtki.celikBasinaMaliyet.toFixed(2)}/ton`, sub: `${fmt(mockMaliEtki.uretimMiktari)} ton üretim`, color: "text-foreground" },
+            { label: t("emission.cbamPhaseFactor"), value: `%${mockMaliEtki.cbamFazFaktoru}`, sub: t("emission.startRate2026"), color: "text-yellow-400" },
+            { label: t("emission.grossTaxLiability"), value: fmtEur(mockMaliEtki.brutVergi), sub: t("emission.calculatedTotal"), color: "text-red-400" },
+            { label: t("emission.effectiveTax"), value: fmtEur(mockMaliEtki.efektifVergi), sub: t("emission.afterCredits"), color: "text-orange-400" },
+            { label: t("emission.costPerTonSteel"), value: `€${mockMaliEtki.celikBasinaMaliyet.toFixed(2)}/ton`, sub: `${fmt(mockMaliEtki.uretimMiktari)} ton üretim`, color: "text-foreground" },
           ].map((item) => (
             <div key={item.label} className="p-3 rounded-lg bg-muted/30 border border-border/50">
               <p className="text-[10px] text-muted-foreground mb-1">{item.label}</p>
@@ -371,7 +376,7 @@ function MaliEtkiCard() {
         <div>
           <p className="text-xs font-semibold text-foreground mb-3 flex items-center gap-2">
             <TrendingUp className="w-3.5 h-3.5 text-primary" />
-            CBAM Phase-in Takvimi (2026–2034)
+            {t("emission.cbamTimeline")}
           </p>
           <div className="relative">
             <div className="absolute top-3.5 left-0 right-0 h-0.5 bg-border" />
@@ -409,6 +414,7 @@ function MaliEtkiCard() {
 
 // ─── Audit Trail ────────────────────────────────────────────────────────────────
 function AuditTrail() {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   return (
     <Card className="glass-card border-border">
@@ -419,7 +425,7 @@ function AuditTrail() {
         >
           <div className="flex items-center gap-2">
             <Clock className="w-4 h-4 text-muted-foreground" />
-            <CardTitle className="text-sm font-semibold text-foreground">Audit Trail</CardTitle>
+            <CardTitle className="text-sm font-semibold text-foreground">{t("emission.auditTrail")}</CardTitle>
             <Badge variant="secondary" className="text-[10px]">{mockAuditTrail.length} kayıt</Badge>
           </div>
           {open ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
@@ -459,6 +465,7 @@ function AuditTrail() {
 
 // ─── Page ───────────────────────────────────────────────────────────────────────
 export default function EmissionPage() {
+  const { t } = useTranslation();
   const anomalyCount = mockEmissionDetails.filter((r) => r.anomali).length;
 
   return (
@@ -471,7 +478,7 @@ export default function EmissionPage() {
         className="flex items-start justify-between"
       >
         <div>
-          <h2 className="text-xl font-bold text-foreground">Emisyon Analizi</h2>
+          <h2 className="text-xl font-bold text-foreground">{t("emission.title")}</h2>
           <p className="text-sm text-muted-foreground mt-1">
             Ajan 2 çıktısı — 2025 Q1 · İzmir Çelik Fabrikası A.Ş.
           </p>

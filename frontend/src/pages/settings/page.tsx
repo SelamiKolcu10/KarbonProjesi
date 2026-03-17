@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 const STORAGE_KEY = "cbam-settings";
 
@@ -36,6 +37,7 @@ function loadSettings(): Settings {
 }
 
 export default function SettingsPage() {
+  const { t } = useTranslation();
   const [settings, setSettings] = useState<Settings>(loadSettings);
 
   const update = <K extends keyof Settings>(key: K, value: Settings[K]) =>
@@ -43,7 +45,7 @@ export default function SettingsPage() {
 
   const handleSave = () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-    toast.success("Ayarlar başarıyla kaydedildi", {
+    toast.success(t("settings.savedSuccess"), {
       icon: <CheckCircle className="w-4 h-4 text-emerald-400" />,
     });
   };
@@ -56,9 +58,9 @@ export default function SettingsPage() {
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.3 }}
       >
-        <h2 className="text-2xl font-bold text-foreground">Sistem Ayarları</h2>
+        <h2 className="text-2xl font-bold text-foreground">{t("settings.title")}</h2>
         <p className="text-sm text-muted-foreground mt-1">
-          LLM sağlayıcıları ve API ayarları
+          {t("settings.subtitle")}
         </p>
       </motion.div>
 
@@ -72,13 +74,13 @@ export default function SettingsPage() {
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
               <Bot className="w-4 h-4 text-primary" />
-              LLM Sağlayıcısı
+              {t("settings.llmProvider")}
             </CardTitle>
-            <p className="text-xs text-muted-foreground">Ajan sistemi için yapay zeka uzmanı seçin</p>
+            <p className="text-xs text-muted-foreground">{t("settings.llmProviderSubtitle")}</p>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <label className="text-xs font-medium text-foreground block mb-2">Model Sağlayıcısı</label>
+              <label className="text-xs font-medium text-foreground block mb-2">{t("settings.modelProvider")}</label>
               <select
                 value={settings.modelProvider}
                 onChange={(e) => update("modelProvider", e.target.value)}
@@ -90,7 +92,7 @@ export default function SettingsPage() {
               </select>
             </div>
             <div>
-              <label className="text-xs font-medium text-foreground block mb-2">Model</label>
+              <label className="text-xs font-medium text-foreground block mb-2">{t("settings.model")}</label>
               <select
                 value={settings.model}
                 onChange={(e) => update("model", e.target.value)}
@@ -115,13 +117,13 @@ export default function SettingsPage() {
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
               <Key className="w-4 h-4 text-primary" />
-              API Anahtarları
+              {t("settings.apiKeys")}
             </CardTitle>
-            <p className="text-xs text-muted-foreground">Güvenli şekilde saklanan API kimlik bilgileri</p>
+            <p className="text-xs text-muted-foreground">{t("settings.apiKeysSubtitle")}</p>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <label className="text-xs font-medium text-foreground block mb-2">OpenAI API Anahtarı</label>
+              <label className="text-xs font-medium text-foreground block mb-2">{t("settings.openaiApiKey")}</label>
               <input
                 type="password"
                 value={settings.openaiKey}
@@ -131,7 +133,7 @@ export default function SettingsPage() {
               />
             </div>
             <div>
-              <label className="text-xs font-medium text-foreground block mb-2">Antropik API Anahtarı</label>
+              <label className="text-xs font-medium text-foreground block mb-2">{t("settings.anthropicApiKey")}</label>
               <input
                 type="password"
                 value={settings.anthropicKey}
@@ -142,7 +144,7 @@ export default function SettingsPage() {
             </div>
             <Button className="gap-2" onClick={handleSave}>
               <Save className="w-4 h-4" />
-              Kaydet
+              {t("common.save")}
             </Button>
           </CardContent>
         </Card>
@@ -158,12 +160,12 @@ export default function SettingsPage() {
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
               <Building2 className="w-4 h-4 text-primary" />
-              Tesis Bilgileri
+              {t("settings.facilityInfo")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <label className="text-xs font-medium text-foreground block mb-2">Tesis Adı</label>
+              <label className="text-xs font-medium text-foreground block mb-2">{t("settings.facilityName")}</label>
               <input
                 type="text"
                 value={settings.tesisAdi}
@@ -172,7 +174,7 @@ export default function SettingsPage() {
               />
             </div>
             <div>
-              <label className="text-xs font-medium text-foreground block mb-2">CBAM Kayıt No</label>
+              <label className="text-xs font-medium text-foreground block mb-2">{t("settings.cbamRegNo")}</label>
               <input
                 type="text"
                 value={settings.cbamNo}
@@ -181,7 +183,7 @@ export default function SettingsPage() {
               />
             </div>
             <div>
-              <label className="text-xs font-medium text-foreground block mb-2">Ülke / Şehir</label>
+              <label className="text-xs font-medium text-foreground block mb-2">{t("settings.countryCity")}</label>
               <input
                 type="text"
                 value={settings.konum}
@@ -191,7 +193,7 @@ export default function SettingsPage() {
             </div>
             <Button variant="outline" className="gap-2" onClick={handleSave}>
               <Save className="w-4 h-4" />
-              Kaydet
+              {t("common.save")}
             </Button>
           </CardContent>
         </Card>

@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 const notificationIcons = {
   critical: AlertCircle,
@@ -32,16 +33,17 @@ const notificationColors = {
 
 type FilterType = "all" | "critical" | "warning" | "info";
 
-const filterOptions: { value: FilterType; label: string }[] = [
-  { value: "all", label: "Tümü" },
-  { value: "critical", label: "Kritik" },
-  { value: "warning", label: "Uyarı" },
-  { value: "info", label: "Bilgi" },
-];
-
 export default function NotificationsPage() {
+  const { t } = useTranslation();
   const [notifications, setNotifications] = useState(mockNotifications);
   const [filterType, setFilterType] = useState<FilterType>("all");
+
+  const filterOptions: { value: FilterType; label: string }[] = [
+    { value: "all", label: t("notifications.all") },
+    { value: "critical", label: t("notifications.critical") },
+    { value: "warning", label: t("notifications.warning") },
+    { value: "info", label: t("notifications.info") },
+  ];
 
   const markAsRead = (id: number) => {
     setNotifications(prev => 
@@ -63,9 +65,9 @@ export default function NotificationsPage() {
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.3 }}
       >
-        <h2 className="text-2xl font-bold text-foreground">Bildirimler</h2>
+        <h2 className="text-2xl font-bold text-foreground">{t("notifications.title")}</h2>
         <p className="text-sm text-muted-foreground mt-1">
-          Sistem uyarıları ve bilgi mesajları
+          {t("notifications.subtitle")}
         </p>
       </motion.div>
 
@@ -133,7 +135,7 @@ export default function NotificationsPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <Badge className={cn("text-[10px] uppercase", colors.badge)}>
-                            {n.tip === "critical" ? "KRİTİK" : n.tip === "warning" ? "UYARI" : "BİLGİ"}
+                            {n.tip === "critical" ? t("notifications.badgeCritical") : n.tip === "warning" ? t("notifications.badgeWarning") : t("notifications.badgeInfo")}
                           </Badge>
                           {!n.okundu && (
                             <span className="w-2 h-2 rounded-full bg-primary" />
@@ -165,7 +167,7 @@ export default function NotificationsPage() {
           <Card className="glass-card border-border">
             <CardContent className="p-12 text-center">
               <Bell className="w-12 h-12 mx-auto text-muted-foreground/30 mb-4" />
-              <p className="text-sm text-muted-foreground">Bu kategoride bildirim bulunmuyor</p>
+              <p className="text-sm text-muted-foreground">{t("notifications.emptyCategory")}</p>
             </CardContent>
           </Card>
         )}

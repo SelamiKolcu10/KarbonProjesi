@@ -5,8 +5,10 @@ import { Badge } from "@/components/ui/badge";
 import { useState, useRef, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 export default function UploadPage() {
+  const { t } = useTranslation();
   const [isDragging, setIsDragging] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [jsonPreview, setJsonPreview] = useState<object | null>(null);
@@ -74,7 +76,7 @@ export default function UploadPage() {
   const handleFile = async (file: File) => {
     // Client-side file size validation
     if (file.size > MAX_FILE_SIZE) {
-      toast.error("Dosya boyutu 50 MB limitini aşıyor!", {
+      toast.error(t("upload.fileSizeExceeded"), {
         description: `Seçilen dosya: ${(file.size / 1024 / 1024).toFixed(1)} MB`,
       });
       return;
@@ -99,7 +101,7 @@ export default function UploadPage() {
       });
 
       if (!response.ok) {
-        const err = await response.json().catch(() => ({ detail: "Bilinmeyen hata" }));
+        const err = await response.json().catch(() => ({ detail: t("upload.unknownError") }));
         throw new Error(err.detail || `HTTP ${response.status}`);
       }
 
@@ -128,7 +130,7 @@ export default function UploadPage() {
       clearProgress();
       setUploadProgress(0);
       setUploadStatus("error");
-      setErrorMessage(err.message || "Dosya yükleme hatası");
+      setErrorMessage(err.message || t("upload.errorMessage"));
       setJsonPreview(null);
     } finally {
       setIsProcessing(false);
@@ -143,9 +145,9 @@ export default function UploadPage() {
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.3 }}
       >
-        <h2 className="text-2xl font-bold text-foreground">Belgeleme Paneli</h2>
+        <h2 className="text-2xl font-bold text-foreground">{t("upload.title")}</h2>
         <p className="text-sm text-muted-foreground mt-1">
-          PDF veya Excel fabrika belgesini yükleyin — Ajan 1 otomatik olarak veri çıkarımını başlatır
+          {t("upload.subtitle")}
         </p>
       </motion.div>
 
@@ -182,10 +184,10 @@ export default function UploadPage() {
                     <Upload className="w-8 h-8 text-muted-foreground" />
                   </div>
                   <h3 className="text-lg font-semibold text-foreground mb-2">
-                    Dosyayı sürükleyip bırakın
+                    {t("upload.dragDrop")}
                   </h3>
                   <p className="text-sm text-muted-foreground mb-4">
-                    veya <span className="text-primary underline">bilgisayardan seçin</span>
+                    {t("upload.orSelect")} <span className="text-primary underline">{t("upload.selectFromComputer")}</span>
                   </p>
                   <div className="flex items-center justify-center gap-2">
                     <Badge variant="outline" className="text-xs">.PDF</Badge>
@@ -193,7 +195,7 @@ export default function UploadPage() {
                     <Badge variant="outline" className="text-xs">.XLS</Badge>
                     <Badge variant="outline" className="text-xs">.CSV</Badge>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-4">Maks. dosya boyutu: 50 MB</p>
+                  <p className="text-xs text-muted-foreground mt-4">{t("upload.maxFileSize")}</p>
                 </label>
               </div>
 
@@ -223,13 +225,13 @@ export default function UploadPage() {
                       <p className="font-medium text-foreground">{uploadedFile.name}</p>
                       <p className="text-xs text-muted-foreground">
                         {(uploadedFile.size / 1024 / 1024).toFixed(2)} MB
-                        {uploadStatus === "success" && " — ✅ Başarıyla işlendi"}
+                        {uploadStatus === "success" && ` — ✅ ${t("upload.successMessage")}`}
                         {uploadStatus === "error" && ` — ❌ ${errorMessage}`}
                       </p>
                       {uploadStatus === "uploading" && (
                         <div className="mt-2">
                           <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-                            <span>İşleniyor...</span>
+                            <span>{t("upload.processing")}</span>
                             <span>%{uploadProgress}</span>
                           </div>
                           <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
@@ -243,7 +245,7 @@ export default function UploadPage() {
                     </div>
                     {fileDeleted && (
                       <Badge variant="outline" className="text-xs text-green-500 border-green-500/30">
-                        <Shield className="w-3 h-3 mr-1" /> Dosya silindi
+                        <Shield className="w-3 h-3 mr-1" /> {t("upload.fileDeleted")}
                       </Badge>
                     )}
                   </div>
@@ -263,7 +265,7 @@ export default function UploadPage() {
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
                 <Table className="w-4 h-4" />
-                JSON Önizleme
+                {t("upload.jsonPreview")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -274,8 +276,8 @@ export default function UploadPage() {
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
                   <File className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">Belge yüklendikten sonra</p>
-                  <p className="text-sm">etiketlendi veri burada görünüyor</p>
+                  <p className="text-sm">{t("upload.afterUploadLine1")}</p>
+                  <p className="text-sm">{t("upload.afterUploadLine2")}</p>
                 </div>
               )}
             </CardContent>
@@ -294,7 +296,7 @@ export default function UploadPage() {
           <FileText className="w-5 h-5 text-muted-foreground flex-shrink-0 mt-0.5" />
           <div>
             <p className="text-xs text-muted-foreground">
-              PDF belgelerinde metin güvenilirliği çıkarımını arttırır
+              {t("upload.pdfConfidence")}
             </p>
             {extractionInfo.confidence !== undefined && (
               <p className="text-xs text-primary mt-1 font-medium">
@@ -307,7 +309,7 @@ export default function UploadPage() {
           <Table className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
           <div>
             <p className="text-xs text-muted-foreground">
-              Excel dosyalarının sütun başlıkları Türkçe veya İngilizce olabilir
+              {t("upload.excelColumns")}
             </p>
             {extractionInfo.columnLanguage && extractionInfo.columnLanguage !== "unknown" && (
               <p className="text-xs text-green-500 mt-1 font-medium">
@@ -320,11 +322,11 @@ export default function UploadPage() {
           <Shield className="w-5 h-5 text-orange-500 flex-shrink-0 mt-0.5" />
           <div>
             <p className="text-xs text-muted-foreground">
-              Belgeler işlendikten sonra güvenli bir şekilde silinir, saklanmaz
+              {t("upload.documentsDeleted")}
             </p>
             {fileDeleted && (
               <p className="text-xs text-orange-500 mt-1 font-medium">
-                ✅ Dosya güvenli şekilde silindi
+                ✅ {t("upload.fileDeletedSecurely")}
               </p>
             )}
           </div>

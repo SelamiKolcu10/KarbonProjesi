@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   AreaChart,
@@ -52,6 +53,7 @@ const fmtEur = (n: number) =>
 
 // ─── Risk Gauge ─────────────────────────────────────────────────────────────────
 function RiskGauge({ score }: { score: number }) {
+  const { t } = useTranslation();
   const clamp = Math.min(100, Math.max(0, score));
   const R = 70;
   const cx = 90;
@@ -79,7 +81,7 @@ function RiskGauge({ score }: { score: number }) {
   const scoreAngle = Math.PI - (clamp / 100) * Math.PI;
   const needle = polarToXY(scoreAngle, R - 8);
 
-  const riskLabel = clamp >= 66 ? "YÜKSEK RİSK" : clamp >= 33 ? "ORTA RİSK" : "DÜŞÜK RİSK";
+  const riskLabel = clamp >= 66 ? t("strategy.highRisk") : clamp >= 33 ? t("strategy.mediumRisk") : t("strategy.lowRisk");
   const riskColor = clamp >= 66 ? "text-red-400" : clamp >= 33 ? "text-yellow-400" : "text-green-400";
   const badgeBg = clamp >= 66
     ? "bg-red-500/20 text-red-400 border-red-500/30"
@@ -155,6 +157,7 @@ function SimulationPanel({
   totalEmission: number;
   totalTax: number;
 }) {
+  const { t } = useTranslation();
   const savedEmission = selected.reduce((s, sc) => s + sc.tasarrufEmisyon, 0);
   const savedMoney    = selected.reduce((s, sc) => s + sc.maliKazanc, 0);
   const newEmission   = Math.max(0, totalEmission - savedEmission);
@@ -162,8 +165,8 @@ function SimulationPanel({
   const reduction     = totalEmission > 0 ? ((savedEmission / totalEmission) * 100) : 0;
 
   const barData = [
-    { name: "Mevcut", emisyon: totalEmission, fill: "#EF4444" },
-    { name: "Senaryo Sonrası", emisyon: newEmission, fill: "#22C55E" },
+    { name: t("strategy.current"), emisyon: totalEmission, fill: "#EF4444" },
+    { name: t("strategy.afterScenario"), emisyon: newEmission, fill: "#22C55E" },
   ];
 
   return (
@@ -258,6 +261,7 @@ function SimulationPanel({
 
 // ─── Scenario Table ──────────────────────────────────────────────────────────────
 function ScenarioTable() {
+  const { t } = useTranslation();
   const [scenarios, setScenarios] = useState(mockScenarios);
 
   const toggleScenario = (id: number) => {
@@ -274,7 +278,7 @@ function ScenarioTable() {
             <div>
               <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
                 <Zap className="w-4 h-4 text-primary" />
-                Optimizasyon Senaryoları
+                {t("strategy.scenarioAnalysis")}
               </CardTitle>
               <p className="text-xs text-muted-foreground mt-0.5">
                 Senaryoları seçin → anlık simülasyon hesaplanır
@@ -298,11 +302,11 @@ function ScenarioTable() {
               <tr className="border-b border-border bg-muted/30">
                 <th className="w-10 px-4 py-2.5" />
                 <th className="text-left text-muted-foreground font-medium px-4 py-2.5">Senaryo</th>
-                <th className="text-right text-muted-foreground font-medium px-4 py-2.5">Tasarruf (tCO₂e)</th>
-                <th className="text-right text-muted-foreground font-medium px-4 py-2.5">Mali Kazanç</th>
-                <th className="text-center text-muted-foreground font-medium px-4 py-2.5">Süre</th>
-                <th className="text-center text-muted-foreground font-medium px-4 py-2.5">Zorluk</th>
-                <th className="text-center text-muted-foreground font-medium px-4 py-2.5">Öncelik</th>
+                <th className="text-right text-muted-foreground font-medium px-4 py-2.5">{t("strategy.emissionReduction")}</th>
+                <th className="text-right text-muted-foreground font-medium px-4 py-2.5">{t("strategy.financialGain")}</th>
+                <th className="text-center text-muted-foreground font-medium px-4 py-2.5">{t("strategy.implementationTime")}</th>
+                <th className="text-center text-muted-foreground font-medium px-4 py-2.5">{t("strategy.difficulty")}</th>
+                <th className="text-center text-muted-foreground font-medium px-4 py-2.5">{t("strategy.priority")}</th>
               </tr>
             </thead>
             <tbody>
@@ -513,6 +517,7 @@ function CbamTimelineChart() {
 
 // ─── Page ───────────────────────────────────────────────────────────────────────
 export default function StrategyPage() {
+  const { t } = useTranslation();
   const [aiOpen, setAiOpen] = useState(true);
 
   return (
@@ -525,13 +530,13 @@ export default function StrategyPage() {
         className="flex items-start justify-between"
       >
         <div>
-          <h2 className="text-xl font-bold text-foreground">Strateji Raporu</h2>
+          <h2 className="text-xl font-bold text-foreground">{t("strategy.title")}</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Ajan 3 çıktısı — optimizasyon önerileri ve interaktif simülasyon
+            {t("strategy.subtitle")}
           </p>
         </div>
         <Badge className="bg-red-500/15 text-red-400 border-red-500/25 text-xs px-3 py-1.5">
-          Risk Skoru: {mockKpiData.riskScore}/100
+          {t("strategy.riskScore")}: {mockKpiData.riskScore}/100
         </Badge>
       </motion.div>
 
@@ -545,12 +550,12 @@ export default function StrategyPage() {
         >
           <Card className="glass-card border-border h-full flex flex-col items-center justify-center py-6">
             <p className="text-xs text-muted-foreground mb-4 font-medium uppercase tracking-wider">
-              CBAM Uyumluluk Riski
+              {t("strategy.riskDescription")}
             </p>
             <RiskGauge score={mockKpiData.riskScore} />
             <div className="grid grid-cols-3 gap-2 mt-6 w-full px-4">
               {[
-                { label: "0–33", color: "bg-green-500/60", text: "Güvenli" },
+                { label: "0–33", color: "bg-green-500/60", text: t("strategy.safe") },
                 { label: "34–66", color: "bg-yellow-500/60", text: "Dikkat" },
                 { label: "67–100", color: "bg-red-500/60", text: "Kritik" },
               ].map((item) => (
@@ -580,7 +585,7 @@ export default function StrategyPage() {
                     <Sparkles className="w-3.5 h-3.5 text-primary" />
                   </div>
                   <div>
-                    <CardTitle className="text-sm font-semibold text-foreground">AI Danışman Özeti</CardTitle>
+                    <CardTitle className="text-sm font-semibold text-foreground">{t("strategy.aiSummary")}</CardTitle>
                     <p className="text-[10px] text-muted-foreground">Ajan 3 — yönetici özeti</p>
                   </div>
                 </div>
@@ -607,7 +612,7 @@ export default function StrategyPage() {
                             if (line.startsWith("**") && line.endsWith("**")) {
                               return (
                                 <p key={j} className="text-xs font-bold text-primary">
-                                  {line.replaceAll("**", "")}
+                                  {line.split("**").join("")}
                                 </p>
                               );
                             }

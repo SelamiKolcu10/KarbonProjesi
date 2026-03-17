@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import {
   ComposedChart,
@@ -250,6 +251,7 @@ function KpiCard({
 
 // ─── Main Page ──────────────────────────────────────────────────────────────────
 export default function ProjectionPage() {
+  const { t } = useTranslation();
   const [yillikAzaltma, setYillikAzaltma] = useState(5);
   const [uretimDegisim, setUretimDegisim] = useState(2);
   const [karbonSenaryosu, setKarbonSenaryosu] = useState("orta");
@@ -299,7 +301,7 @@ export default function ProjectionPage() {
             Emisyon Projeksiyon Aracı
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            2026–2034 CBAM takvimi boyunca emisyon ve vergi yükümlülüğü simülasyonu
+            {t("projection.subtitle")}
           </p>
         </div>
         <Badge
@@ -315,9 +317,9 @@ export default function ProjectionPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <KpiCard
             icon={Euro}
-            title="Toplam Baz Senaryo Vergisi"
+            title={t("projection.totalTaxLiability")}
             value={fmtEur(totalBazVergi)}
-            sub="2026–2034 kümülatif"
+            sub={t("projection.baseCumulative")}
             color="bg-red-500/80"
             delay={0.05}
           />
@@ -325,23 +327,23 @@ export default function ProjectionPage() {
             icon={TrendingDown}
             title="Optimize Senaryo Vergisi"
             value={fmtEur(totalOptVergi)}
-            sub="2026–2034 kümülatif"
+            sub={t("projection.baseCumulative")}
             color="bg-emerald-500/80"
             delay={0.1}
           />
           <KpiCard
             icon={Leaf}
-            title="Toplam Vergi Tasarrufu"
+            title={t("projection.totalSavings")}
             value={fmtEur(totalTasarruf)}
-            sub={`Kümülatif ${fmt(avgAzaltma)}% emisyon azaltımı`}
+            sub={`Kümülatif ${fmt(avgAzaltma)}% ${t("projection.emissionReduction")}`}
             color="bg-primary/80"
             delay={0.15}
           />
           <KpiCard
             icon={CalendarClock}
-            title="Yatırım Geri Dönüşü"
+            title={t("projection.investmentReturn")}
             value={breakEvenRow ? `${breakEvenRow.yil}` : "2034+"}
-            sub={breakEvenRow ? "Tahmini başabaş yılı" : "Uzun vadeli yatırım"}
+            sub={breakEvenRow ? t("projection.estimatedBreakeven") : t("projection.longTermInvestment")}
             color="bg-violet-500/80"
             delay={0.2}
           />
@@ -357,7 +359,7 @@ export default function ProjectionPage() {
             <div className="flex items-center justify-between">
               <CardTitle className="text-base flex items-center gap-2">
                 <Sliders className="w-4 h-4 text-primary" />
-                Projeksiyon Parametreleri
+                {t("projection.scenarioParameters")}
               </CardTitle>
               <div className="flex items-center gap-2">
                 <span className="text-xs text-muted-foreground hidden sm:block">
@@ -375,7 +377,7 @@ export default function ProjectionPage() {
             <CardContent className="pt-0">
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 <SliderRow
-                  label="Yıllık Emisyon Azaltma Oranı"
+                  label={t("projection.annualReductionRate")}
                   value={yillikAzaltma}
                   min={0}
                   max={20}
@@ -383,10 +385,10 @@ export default function ProjectionPage() {
                   unit="%"
                   onChange={setYillikAzaltma}
                   color="bg-emerald-500/20 text-emerald-400"
-                  description="Önlemler uygulandıktan sonra yılda azalacak emisyon yüzdesi"
+                  description={t("projection.reductionDescription")}
                 />
                 <SliderRow
-                  label="Üretim Hacmi Değişimi"
+                  label={t("projection.productionVolumeChange")}
                   value={uretimDegisim}
                   min={-5}
                   max={10}
@@ -394,10 +396,10 @@ export default function ProjectionPage() {
                   unit="%"
                   onChange={setUretimDegisim}
                   color="bg-blue-500/20 text-blue-400"
-                  description="Yıllık üretim artış veya azalış tahmini"
+                  description={t("projection.productionDescription")}
                 />
                 <SliderRow
-                  label="Nihai Emisyon Hedefi"
+                  label={t("projection.targetReduction")}
                   value={hedefYuzde}
                   min={10}
                   max={80}
@@ -405,7 +407,7 @@ export default function ProjectionPage() {
                   unit="%"
                   onChange={setHedefYuzde}
                   color="bg-violet-500/20 text-violet-400"
-                  description="Baz senaryoya göre hedeflenen azaltım oranı"
+                  description={t("projection.targetDescription")}
                 />
 
                 {/* Carbon price scenario */}
@@ -432,7 +434,7 @@ export default function ProjectionPage() {
                 {/* Measure start year */}
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-foreground">
-                    Önlem Başlangıç Yılı
+                    {t("projection.measureStartYear")}
                   </Label>
                   <p className="text-xs text-muted-foreground">
                     Azaltım önlemlerinin uygulamaya girdiği yıl
@@ -448,7 +450,7 @@ export default function ProjectionPage() {
                       {[2026, 2027, 2028, 2029, 2030].map((y) => (
                         <SelectItem key={y} value={String(y)}>
                           {y}
-                          {y === 2026 ? " (hemen başla)" : y === 2030 ? " (geç)" : ""}
+                          {y === 2026 ? ` ${t("projection.startImmediately")}` : y === 2030 ? ` ${t("projection.late")}` : ""}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -489,7 +491,7 @@ export default function ProjectionPage() {
           )}
         >
           <Leaf className="w-3.5 h-3.5 inline mr-1.5" />
-          Emisyon Projeksiyonu
+          {t("projection.title")}
         </button>
         <button
           onClick={() => setActiveChart("vergi")}
@@ -668,7 +670,7 @@ export default function ProjectionPage() {
                   <Line
                     type="monotone"
                     dataKey="kumulatifTasarruf"
-                    name="Kümülatif Tasarruf"
+                    name={t("projection.cumulativeSavings")}
                     stroke="#8B5CF6"
                     strokeWidth={2.5}
                     dot={false}
@@ -696,15 +698,15 @@ export default function ProjectionPage() {
                 <thead>
                   <tr className="border-b border-white/10">
                     {[
-                      "Yıl",
-                      "CBAM Faz",
-                      "Baz Emisyon",
-                      "Optimize Emisyon",
-                      "Azaltım",
-                      "Baz Vergi",
-                      "Optimize Vergi",
-                      "Yıllık Tasarruf",
-                      "Kümülatif Tasarruf",
+                      t("projection.year"),
+                      t("projection.cbamPhase"),
+                      t("projection.baseEmission"),
+                      t("projection.optimizedEmission"),
+                      t("projection.reduction"),
+                      t("projection.baseTax"),
+                      t("projection.optimizedTax"),
+                      t("projection.annualSavings"),
+                      t("projection.cumulativeSavings"),
                     ].map((h) => (
                       <th
                         key={h}
@@ -828,12 +830,12 @@ export default function ProjectionPage() {
                 <p className="text-sm font-semibold text-foreground">
                   {firstSavingYear
                     ? `${firstSavingYear} yılında yıllık €50.000+ tasarruf başlıyor`
-                    : "Parametreleri ayarlayarak tasarruf fırsatlarını keşfedin"}
+                    : t("projection.adjustParameters")}
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {breakEvenRow
                     ? `Tahmini yatırım geri dönüşü ${breakEvenRow.yil} yılında gerçekleşiyor (capex: ${fmtEur(estimatedCapex)})`
-                    : "Önlem başlangıç yılını erkene alarak daha erken geri dönüş elde edin"}
+                    : t("projection.moveStartEarlier")}
                 </p>
               </div>
             </div>

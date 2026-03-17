@@ -1,18 +1,19 @@
-import { Bell, Building2, ChevronDown, LogOut, Menu } from "lucide-react";
+import { Bell, Building2, ChevronDown, LogOut, Menu, Globe } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { mockNotifications } from "@/lib/mock-data";
 import { Button } from "@/components/ui/button";
 import { useState, useRef, useEffect } from "react";
 
-const pageTitles: Record<string, { title: string; subtitle: string }> = {
-  "/": { title: "Kontrol Paneli", subtitle: "Genel bakış ve KPI özeti" },
-  "/belge-yukle": { title: "Belge Yükle", subtitle: "PDF ve Excel işlemlerinin işlenmesi" },
-  "/emisyon-analizi": { title: "Emisyon Analizi", subtitle: "Ajan 2 ortaya çıktı — programlama ve anormallik tespiti" },
-  "/emisyon-projeksiyonu": { title: "Emisyon Projeksiyonu", subtitle: "2026-2034 CBAM takvimi boyunca emisyon ve vergi yükümlülüğü hesaplaması" },
-  "/strateji-raporu": { title: "Strateji Raporu", subtitle: "Ajan 3 çıktısı — görünüm önerileri" },
-  "/raporlar": { title: "Geçmiş Raporlar", subtitle: "Denetim arşivi ve PDF dışa aktarma" },
-  "/ayarlar": { title: "Ayarlar", subtitle: "Sistem ayarları" },
-  "/bildirimler": { title: "Bildirimler", subtitle: "Uyarılar ve sistem mesajları" },
+const pageKeys: Record<string, string> = {
+  "/": "dashboard",
+  "/belge-yukle": "upload",
+  "/emisyon-analizi": "emission",
+  "/emisyon-projeksiyonu": "projection",
+  "/strateji-raporu": "strategy",
+  "/raporlar": "reports",
+  "/ayarlar": "settings",
+  "/bildirimler": "notifications",
 };
 
 interface TopBarProps {
@@ -20,22 +21,35 @@ interface TopBarProps {
 }
 
 export default function TopBar({ onMenuClick }: TopBarProps) {
+  const { t, i18n } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
-  const pageInfo = pageTitles[location.pathname] ?? { title: "CBAM Yönetimi", subtitle: "" };
+  const key = pageKeys[location.pathname] ?? "default";
+  const pageTitle = t(`topbar.${key}Title`);
+  const pageSubtitle = t(`topbar.${key}Subtitle`, { defaultValue: "" });
   const unreadCount = mockNotifications.filter((n) => !n.okundu).length;
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [langMenuOpen, setLangMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const langRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setUserMenuOpen(false);
       }
+      if (langRef.current && !langRef.current.contains(e.target as Node)) {
+        setLangMenuOpen(false);
+      }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const switchLanguage = (lng: string) => {
+    i18n.changeLanguage(lng);
+    setLangMenuOpen(false);
+  };
 
   return (
     <header className="h-16 border-b border-border bg-card/50 backdrop-blur-sm flex items-center justify-between px-4 md:px-6 sticky top-0 z-10">
@@ -50,12 +64,40 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
           <Menu className="w-5 h-5" />
         </Button>
         <div>
-          <h1 className="text-base font-semibold text-foreground">{pageInfo.title}</h1>
-          <p className="text-xs text-muted-foreground hidden sm:block">{pageInfo.subtitle}</p>
+          <h1 className="text-base font-semibold text-foreground">{pageTitle}</h1>
+          <p className="text-xs text-muted-foreground hidden sm:block">{pageSubtitle}</p>
         </div>
       </div>
 
       <div className="flex items-center gap-3">
+        {/* Language Switcher */}
+        <div className="relative" ref={langRef}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="w-9 h-9"
+            onClick={() => setLangMenuOpen((prev) => !prev)}
+          >
+            <Globe className="w-4 h-4" />
+          </Button>
+          {langMenuOpen && (
+            <div className="absolute right-0 mt-1 w-36 rounded-lg border border-border bg-card shadow-lg py-1 z-50">
+              <button
+                className={`flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent transition-colors ${i18n.language === "en" ? "text-primary font-medium" : "text-foreground"}`}
+                onClick={() => switchLanguage("en")}
+              >
+                {t("language.en")}
+              </button>
+              <button
+                className={`flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent transition-colors ${i18n.language === "tr" ? "text-primary font-medium" : "text-foreground"}`}
+                onClick={() => switchLanguage("tr")}
+              >
+                {t("language.tr")}
+              </button>
+            </div>
+          )}
+        </div>
+
         {/* Notification Bell */}
         <Button
           variant="ghost"
@@ -81,8 +123,8 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
               <Building2 className="w-3.5 h-3.5 text-primary" />
             </div>
             <div className="text-left">
-              <p className="text-xs font-medium text-foreground">İzmir Çelik A.Ş.</p>
-              <p className="text-[10px] text-muted-foreground">Fabrika Yöneticisi</p>
+              <p className="text-xs font-medium text-foreground">{t("topbar.companyName")}</p>
+              <p className="text-[10px] text-muted-foreground">{t("topbar.role")}</p>
             </div>
             <ChevronDown className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${userMenuOpen ? "rotate-180" : ""}`} />
           </button>
@@ -97,7 +139,7 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
                 }}
               >
                 <LogOut className="w-4 h-4" />
-                Çıkış Yap
+                {t("topbar.logout")}
               </button>
             </div>
           )}

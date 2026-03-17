@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/select.tsx";
 import { mockGeçmisRaporlar, mockEmissionDetails, mockMaliEtki } from "@/lib/mock-data.ts";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 type Compliance = "compliant" | "warning" | "non_compliant";
@@ -73,7 +74,7 @@ const fmtFull = (iso: string) =>
   new Intl.DateTimeFormat("tr-TR", { dateStyle: "long", timeStyle: "short" }).format(new Date(iso));
 
 // ─── PDF Generator ──────────────────────────────────────────────────────────────
-function generateReportPDF(report: (typeof mockGeçmisRaporlar)[0]) {
+function generateReportPDF(report: (typeof mockGeçmisRaporlar)[0], t: (key: string, options?: Record<string, unknown>) => string) {
   const doc = new jsPDF();
   const pageW = doc.internal.pageSize.getWidth();
 
@@ -181,14 +182,14 @@ function generateReportPDF(report: (typeof mockGeçmisRaporlar)[0]) {
   doc.setFontSize(11);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(30, 30, 30);
-  doc.text("Mali Etki - CBAM Yukumluluğu", 14, afterTable);
+  doc.text(t("reports.financialImpact"), 14, afterTable);
 
   autoTable(doc, {
     startY: afterTable + 4,
     head: [["Kalem", "Deger"]],
     body: [
       ["CBAM Faz Faktoru (2026)", `%${mockMaliEtki.cbamFazFaktoru}`],
-      ["Brut Vergi Yukumluluğu", fmtEur(mockMaliEtki.brutVergi)],
+      [t("reports.brutTaxLiability"), fmtEur(mockMaliEtki.brutVergi)],
       ["Efektif Vergi (Krediler haric)", fmtEur(mockMaliEtki.efektifVergi)],
       ["Celik Basina Maliyet", `€${mockMaliEtki.celikBasinaMaliyet.toFixed(2)}/ton`],
     ],
@@ -239,6 +240,7 @@ function exportAllCSV(data: typeof mockGeçmisRaporlar) {
 
 // ─── Summary Stats ──────────────────────────────────────────────────────────────
 function SummaryStats({ data }: { data: typeof mockGeçmisRaporlar }) {
+  const { t } = useTranslation();
   const total = data.length;
   const compliant = data.filter((r) => r.uyumluluk === "compliant").length;
   const avgEmission = total > 0 ? data.reduce((s, r) => s + r.emisyon, 0) / total : 0;
@@ -251,15 +253,15 @@ function SummaryStats({ data }: { data: typeof mockGeçmisRaporlar }) {
     <div className="grid grid-cols-4 gap-3">
       {[
         {
-          label: "Toplam Denetim",
+          label: t("reports.totalReports"),
           value: String(total),
-          sub: "kayıt",
+          sub: t("reports.record"),
           icon: <FileText className="w-4 h-4" />,
           color: "text-foreground",
           bg: "bg-muted/30 border-border/50",
         },
         {
-          label: "Uyumluluk Oranı",
+          label: t("reports.complianceRate"),
           value: total > 0 ? `%${Math.round((compliant / total) * 100)}` : "—",
           sub: `${compliant}/${total} uyumlu`,
           icon: <ShieldCheck className="w-4 h-4" />,
@@ -267,17 +269,17 @@ function SummaryStats({ data }: { data: typeof mockGeçmisRaporlar }) {
           bg: compliant / total >= 0.7 ? "bg-green-500/5 border-green-500/20" : "bg-yellow-500/5 border-yellow-500/20",
         },
         {
-          label: "Ort. Emisyon",
+          label: t("reports.avgEmission"),
           value: `${fmt(Math.round(avgEmission))}`,
-          sub: "tCO₂e / dönem",
+          sub: t("reports.perPeriod"),
           icon: trend > 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />,
           color: trend > 0 ? "text-red-400" : "text-green-400",
           bg: "bg-muted/30 border-border/50",
         },
         {
-          label: "Toplam CBAM Vergisi",
+          label: t("reports.totalCbamTax"),
           value: fmtEur(totalTax),
-          sub: "tüm dönemler",
+          sub: t("reports.allPeriods"),
           icon: <Euro className="w-4 h-4" />,
           color: "text-orange-400",
           bg: "bg-orange-500/5 border-orange-500/20",
@@ -306,6 +308,7 @@ function ReportRow({
   report: (typeof mockGeçmisRaporlar)[0];
   onPdf: () => void;
 }) {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const cfg = complianceConfig[report.uyumluluk as Compliance];
 
@@ -344,7 +347,7 @@ function ReportRow({
           <div className="flex items-center justify-center gap-1.5">
             <Badge className={cn("text-[10px] px-1.5 gap-1", cfg.badgeClass)}>
               {cfg.icon}
-              {cfg.label}
+              {{ compliant: t("reports.compliant"), warning: t("reports.warning"), non_compliant: t("reports.nonCompliant") }[report.uyumluluk as Compliance]}
             </Badge>
           </div>
         </td>
@@ -396,9 +399,9 @@ function ReportRow({
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2 font-medium">Emisyon Kırılımı</p>
                 <div className="space-y-1.5">
                   {[
-                    { label: "Scope 1 (Doğrudan)", value: "58.420", color: "bg-yellow-500" },
-                    { label: "Scope 2 (Elektrik)",  value: "31.680", color: "bg-blue-500"   },
-                    { label: "Proses",               value: "34.750", color: "bg-purple-500" },
+                    { label: t("reports.scope1Direct"), value: "58.420", color: "bg-yellow-500" },
+                    { label: t("reports.scope2Electricity"),  value: "31.680", color: "bg-blue-500"   },
+                    { label: t("reports.processEmissions"),               value: "34.750", color: "bg-purple-500" },
                   ].map((item) => (
                     <div key={item.label} className="flex items-center justify-between text-[11px]">
                       <div className="flex items-center gap-1.5">
@@ -414,10 +417,10 @@ function ReportRow({
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2 font-medium">Mali Özet</p>
                 <div className="space-y-1.5">
                   {[
-                    { label: "CBAM Faz Faktörü", value: "%2,5" },
-                    { label: "Brüt Vergi",        value: fmtEur(report.cbamVergi) },
-                    { label: "Efektif Vergi",      value: fmtEur(Math.round(report.cbamVergi * 0.835)) },
-                    { label: "€/ton Çelik",        value: "€2,13" },
+                    { label: t("reports.cbamPhaseFactor"), value: "%2,5" },
+                    { label: t("reports.grossTax"),        value: fmtEur(report.cbamVergi) },
+                    { label: t("reports.effectiveTax"),      value: fmtEur(Math.round(report.cbamVergi * 0.835)) },
+                    { label: t("reports.costPerTonSteel"),        value: "€2,13" },
                   ].map((item) => (
                     <div key={item.label} className="flex items-center justify-between text-[11px]">
                       <span className="text-muted-foreground">{item.label}</span>
@@ -473,6 +476,7 @@ function ChevronRightIcon({ className }: { className?: string }) {
 
 // ─── Page ───────────────────────────────────────────────────────────────────────
 export default function ReportsPage() {
+  const { t } = useTranslation();
   const [search, setSearch] = useState("");
   const [filterCompliance, setFilterCompliance] = useState<string>("all");
   const [filterTesis, setFilterTesis] = useState<string>("all");
@@ -522,14 +526,14 @@ export default function ReportsPage() {
     toast.promise(
       new Promise<void>((resolve) => {
         setTimeout(() => {
-          generateReportPDF(report);
+          generateReportPDF(report, t);
           resolve();
         }, 600);
       }),
       {
-        loading: "PDF hazırlanıyor...",
-        success: "PDF başarıyla indirildi",
-        error: "PDF oluşturma hatası",
+        loading: t("reports.pdfPreparing"),
+        success: t("reports.pdfDownloaded"),
+        error: t("reports.pdfError"),
       }
     );
   };
@@ -549,9 +553,9 @@ export default function ReportsPage() {
         className="flex items-start justify-between"
       >
         <div>
-          <h2 className="text-xl font-bold text-foreground">Geçmiş Raporlar</h2>
+          <h2 className="text-xl font-bold text-foreground">{t("reports.title")}</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Denetim arşivi — {mockGeçmisRaporlar.length} kayıt
+            {t("reports.subtitle")} — {mockGeçmisRaporlar.length} {t("reports.record")}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -561,19 +565,19 @@ export default function ReportsPage() {
             onClick={handleCsvExport}
           >
             <FileSpreadsheet className="w-3.5 h-3.5" />
-            Excel'e Aktar ({filtered.length})
+            {t("reports.downloadCsv")} ({filtered.length})
           </Button>
           <Button
             className="gap-2 text-xs h-9"
             onClick={() => {
               toast.promise(
-                new Promise<void>((res) => setTimeout(() => { filtered.forEach((r) => generateReportPDF(r)); res(); }, 400)),
-                { loading: "Tüm PDF'ler hazırlanıyor...", success: "İndirme başladı", error: "Hata" }
+                new Promise<void>((res) => setTimeout(() => { filtered.forEach((r) => generateReportPDF(r, t)); res(); }, 400)),
+                { loading: t("reports.allPdfPreparing"), success: t("reports.downloadStarted"), error: t("reports.error") }
               );
             }}
           >
             <Download className="w-3.5 h-3.5" />
-            Tümünü İndir
+            {t("reports.downloadAllPdf")}
           </Button>
         </div>
       </motion.div>
@@ -593,7 +597,7 @@ export default function ReportsPage() {
               {hasFilters && (
                 <button onClick={clearFilters} className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors ml-2 font-normal">
                   <X className="w-3 h-3" />
-                  Temizle
+                  {t("reports.clearFilters")}
                 </button>
               )}
             </CardTitle>
@@ -603,7 +607,7 @@ export default function ReportsPage() {
               <div className="col-span-2 relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
                 <Input
-                  placeholder="Tesis adı ara..."
+                  placeholder={t("reports.searchFacility")}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="pl-9 h-9 text-xs"
@@ -615,10 +619,10 @@ export default function ReportsPage() {
                   <SelectValue placeholder="Uyumluluk" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Tüm Durumlar</SelectItem>
-                  <SelectItem value="compliant">Uyumlu</SelectItem>
-                  <SelectItem value="warning">Dikkat</SelectItem>
-                  <SelectItem value="non_compliant">Uyumsuz</SelectItem>
+                  <SelectItem value="all">{t("reports.allStatuses")}</SelectItem>
+                  <SelectItem value="compliant">{t("reports.compliant")}</SelectItem>
+                  <SelectItem value="warning">{t("reports.warning")}</SelectItem>
+                  <SelectItem value="non_compliant">{t("reports.nonCompliant")}</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -629,7 +633,7 @@ export default function ReportsPage() {
                   value={dateFrom}
                   onChange={(e) => setDateFrom(e.target.value)}
                   className="pl-9 h-9 text-xs"
-                  placeholder="Başlangıç tarihi"
+                  placeholder={t("reports.startDate")}
                 />
               </div>
 
@@ -640,14 +644,14 @@ export default function ReportsPage() {
                   value={dateTo}
                   onChange={(e) => setDateTo(e.target.value)}
                   className="pl-9 h-9 text-xs"
-                  placeholder="Bitiş tarihi"
+                  placeholder={t("reports.endDate")}
                 />
               </div>
             </div>
 
             {hasFilters && (
               <div className="flex items-center gap-2 mt-3 flex-wrap">
-                <span className="text-[10px] text-muted-foreground">Aktif filtreler:</span>
+                <span className="text-[10px] text-muted-foreground">{t("reports.activeFilters")}</span>
                 {search && (
                   <Badge variant="secondary" className="text-[10px] gap-1 px-2">
                     Arama: "{search}"
@@ -690,22 +694,23 @@ export default function ReportsPage() {
                 <div className="w-12 h-12 rounded-xl bg-muted/50 border border-border/40 flex items-center justify-center">
                   <BarChart3 className="w-6 h-6 text-muted-foreground/50" />
                 </div>
-                <p className="text-sm text-muted-foreground">Filtre kriterlerine uyan kayıt bulunamadı</p>
+                <p className="text-sm text-muted-foreground">{t("reports.noMatchingRecords")}</p>
                 <Button variant="ghost" size="sm" onClick={clearFilters} className="text-xs">
-                  Filtreleri temizle
+                  {t("reports.clearFilters")}
                 </Button>
               </div>
             ) : (
+              <>
               <table className="w-full text-xs">
                 <thead>
                   <tr className="border-b border-border bg-muted/30">
-                    <th className="text-left text-muted-foreground font-medium px-4 py-3">Tarih</th>
-                    <th className="text-left text-muted-foreground font-medium px-4 py-3">Tesis</th>
-                    <th className="text-right text-muted-foreground font-medium px-4 py-3">Emisyon</th>
-                    <th className="text-right text-muted-foreground font-medium px-4 py-3">CBAM Vergisi</th>
-                    <th className="text-center text-muted-foreground font-medium px-4 py-3">Uyumluluk</th>
-                    <th className="text-center text-muted-foreground font-medium px-4 py-3">Güven</th>
-                    <th className="text-right text-muted-foreground font-medium px-4 py-3">İşlemler</th>
+                    <th className="text-left text-muted-foreground font-medium px-4 py-3">{t("reports.date")}</th>
+                    <th className="text-left text-muted-foreground font-medium px-4 py-3">{t("reports.facility")}</th>
+                    <th className="text-right text-muted-foreground font-medium px-4 py-3">{t("reports.emission")}</th>
+                    <th className="text-right text-muted-foreground font-medium px-4 py-3">{t("reports.cbamTax")}</th>
+                    <th className="text-center text-muted-foreground font-medium px-4 py-3">{t("reports.compliance")}</th>
+                    <th className="text-center text-muted-foreground font-medium px-4 py-3">{t("reports.trust")}</th>
+                    <th className="text-right text-muted-foreground font-medium px-4 py-3">{t("reports.operations")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -723,7 +728,7 @@ export default function ReportsPage() {
               {filtered.length > itemsPerPage && (
                 <div className="flex items-center justify-between px-4 py-3 border-t border-border/50">
                   <p className="text-xs text-muted-foreground">
-                    {filtered.length} kayıttan {(currentPage - 1) * itemsPerPage + 1}–{Math.min(currentPage * itemsPerPage, filtered.length)} arası gösteriliyor
+                    {t("reports.showingRecords", { from: (currentPage - 1) * itemsPerPage + 1, to: Math.min(currentPage * itemsPerPage, filtered.length), total: filtered.length })}
                   </p>
                   <div className="flex items-center gap-2">
                     <Button
@@ -733,7 +738,7 @@ export default function ReportsPage() {
                       disabled={currentPage <= 1}
                       onClick={() => setCurrentPage((p) => p - 1)}
                     >
-                      Önceki
+                      {t("reports.previous")}
                     </Button>
                     <span className="text-xs text-muted-foreground tabular-nums px-2">
                       Sayfa {currentPage} / {totalPages}
@@ -745,11 +750,12 @@ export default function ReportsPage() {
                       disabled={currentPage >= totalPages}
                       onClick={() => setCurrentPage((p) => p + 1)}
                     >
-                      Sonraki
+                      {t("reports.next")}
                     </Button>
                   </div>
                 </div>
               )}
+              </>
             )}
           </CardContent>
         </Card>
