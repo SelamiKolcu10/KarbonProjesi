@@ -343,3 +343,153 @@ Pull request'ler kabul edilir. Büyük değişiklikler için lütfen önce issue
 ---
 
 **Not:** Bu proje CBAM mevzuatı analizi için geliştirilmiştir. Gerçek uygulamalarda çıktıları mutlaka doğrulayın.
+
+---
+## Son Eklenenler (Ozet)
+
+- Data Quality Guard katmani eklendi.
+- Pipeline tarafinda fail-fast validasyon (Stage 2.5) aktif edildi.
+- API tarafinda data quality hatalari icin kural kodlu 422 cevap modeli eklendi.
+- Frontend upload akisinda data quality hatalari kullaniciya aksiyon odakli gosterilmeye baslandi.
+- Frontend sayfalarinda TR/EN i18n kapsami genisletildi.
+
+## Hizli Inceleme Sirasi
+
+1. PROJE_KONTROL.md dosyasindaki guncel durum notlarini oku.
+2. api.py icinde /api/upload ve /api/validate-payload akislarini incele.
+3. src/pipeline.py icindeki Stage 2 -> Stage 2.5 -> Stage 3 akisina bak.
+4. src/agents/guards/schema_guard.py icindeki business-rule kontrollerini kontrol et.
+
+---
+
+## Bugun Yapilan Degisiklikler (Detayli)
+
+Bu bolum, bugun UI/UX ve entegrasyon tarafinda yapilan tum iyilestirmeleri teknik akisla birlikte detaylandirir.
+
+### 1) Enterprise ve Orchestrator Altyapisi
+
+- Orchestrator job lifecycle katmani, asenkron denetim calistirma modelini standartlastiracak sekilde canliya alindi.
+- FastAPI tarafinda job submit ve status endpointleri ile API tabanli is takibi netlestirildi.
+- ExplainabilityAgent ile denetim sonucu yalnizca sayisal rapor olmaktan cikarilip regulator odakli izlenebilir adimlar (audit trail) ile guclendirildi.
+- RegressionAgent entegrasyonu ile emisyon/vergi hesaplarinda baseline uyumu korunarak CI/CD ortaminda dogrulanabilirlik arttirildi.
+- Bu katmanin birim ve entegrasyon testleriyle guard red, basarili tamamlama ve hata izolasyonu gibi kritik senaryolar kapsandi.
+
+### 2) Upload -> Orchestrator Baglantisi (Uctan Uca Akis)
+
+- Frontend upload akisi, native fetch cagrilarindan cikarilarak merkezi API istemcisi ve JobService etrafinda toplandi.
+- Upload sonrasi job submit + polling + tamamlanan sonucun gosterimi tek bir tutarli akis haline getirildi.
+- JobId state yonetimi netlestirildi ve backend status degisimleri (PENDING/RUNNING/COMPLETED/FAILED/REJECTED_BY_GUARD) UI tarafina reaktif sekilde baglandi.
+- Yeniden kullanilabilir useJobPolling hook'u ile polling baslatma, sonlandirma ve hata durumlarinda kontrollu kapanis mekanizmasi standartlastirildi.
+
+### 3) Data Quality Guard ve Fail-Fast Yaklasimi
+
+- Pipeline oncesi zorunlu validasyon adimi eklenerek hatali payload'larin denetim zincirine girmeden erken reddedilmesi saglandi.
+- API tarafinda data quality ihlalleri icin kodlu ve yapisal 422 cevap modeli kullanima alindi.
+- Frontend upload ekraninda bu 422 cevaplari kullaniciya sadece hata metni olarak degil:
+  - kural kodu,
+  - aciklama,
+  - aksiyon odakli yonlendirme
+  formatinda gosterilecek sekilde iyilestirildi.
+
+### 4) ExecutiveConsultingReport UI Donusumu
+
+- Upload tamamlanma ekranindaki ham JSON dump (pre/code blok) kaldirildi.
+- Yerine yonetici odakli ozet panel akisi tasarlandi:
+  1. AI Consultant Summary,
+  2. KPI Cards,
+  3. 5-Year Tsunami Chart.
+- Bu donusum ile "ham veri gosteren teknik ekran" modelinden "karar destek dashboard" modeline gecildi.
+
+### 5) KPI Cards Bileseni
+
+- Yeni KPI Cards bileseni ile ExecutiveConsultingReport icindeki kritik metrikler tek bakista sunuldu:
+  - Readiness Score,
+  - 2026 Estimated Tax,
+  - Total CBAM Emissions.
+- Readiness degerine gore risk rengi dinamiklestirildi:
+  - 70 alti: yuksek risk tonu,
+  - 80 ustu: dusuk risk tonu,
+  - ara bant: dikkat tonu.
+- Veri eksikligi durumlari sifirla maskelemek yerine N/A ile gosterilerek yoneticinin yanlis yorum yapmasi engellendi.
+
+### 6) Tsunami Chart (5 Yillik Vergi Projeksiyonu)
+
+- Recharts tabanli yeni bar chart ile bes yillik vergi artisi trendi gorunsellestirildi.
+- Projection object -> chart data array donusumu komponent icinde standart hale getirildi.
+- Y ekseni ve tooltip EUR formatina baglandi; artan mali riskin algilanmasi icin bar rengi risk odakli secildi.
+- Veri yoksa bos chart yerine anlasilir bir empty-state mesaji gosterilerek UX saglamlastirildi.
+
+### 7) Sonuc Ekrani Zenginlestirmeleri
+
+- Analysis Complete bandi altina readiness tabanli risk badge eklendi.
+- AI summary kutusuna metadata etiketleri eklendi:
+  - Readiness yuzdesi,
+  - Early Warning Signal,
+  - Job ID.
+- Early Warning katmani readiness skoruyla sinirli kalmayacak sekilde backend compliance/risk sinyalleri ile birlestirildi.
+- Korumaci siniflandirma stratejisi uygulandi: birden fazla risk sinyali varsa daha yuksek risk seviyesi tercih edildi.
+
+### 8) i18n Genislemesi ve Sinyal Etiketleme
+
+- Upload sonuc ekranindaki yeni metinler (risk, summary, signal vb.) TR/EN ceviri anahtarlarina tasindi.
+- Backend'den gelen teknik sinyal kodlari (ornegin non_compliant, rejected_by_guard) kullanici dostu etiketlere cevrildi.
+- Dashboard widget basliklari, N/A metinleri ve chart empty-state metinleri de i18n kapsamina alindi.
+
+### 9) Locale-Aware Sayisal/Para Formatlama
+
+- KPI ve chart bilesenlerinde sayi/para gostergeleri aktif dile gore (TR/EN) otomatik formatlanacak sekilde guncellendi.
+- Upload sonucundaki readiness gosterimi de ayni locale mantigina baglandi.
+- Tekrar eden formatter kodlarini azaltmak icin merkezi formatlama yardimcisi eklendi ve widget'lar bu utility'e tasindi.
+
+### 10) Teknik Etki Ozeti
+
+- Frontend tarafinda ham veri gosteriminden karar destek odakli yonetici paneline gecis tamamlandi.
+- Job status takibi, data quality feedback dongusu ve executive rapor gosterimi tek bir tutarli urun akisinda birlestirildi.
+- i18n + locale standardizasyonu ile farkli dil senaryolarinda gorunum tutarliligi arttirildi.
+- Kod organizasyonu, tekrar eden formatlama mantiginin merkezilesmesiyle daha bakimi kolay bir hale getirildi.
+
+### 11) RecommendationCards Bileseni (Stratejik Eylem Katmani)
+
+- Dashboard icin yeni `RecommendationCards` bileseni eklendi ve AI tarafindan uretilen ust duzey aksiyon onerileri yonetici ekraninda kart bazli bir modelle gosterilir hale getirildi.
+- Bilesen, `recommendations` dizisini prop olarak alacak sekilde tasarlandi; veri yoksa bos blok basmamak icin null-donus davranisi ile gereksiz UI kalabaligi engellendi.
+- Responsive grid yapisi ile mobilde tek kolon, masaustu gorunumde iki kolon duzeni kullanilarak hem okunabilirlik hem de bilgi yogunlugu dengelendi.
+- Her kartta su alanlar standartlastirildi:
+  - `strategy_name` (ana baslik),
+  - `difficulty` (Low/Medium/High rozet),
+  - `action_plan` (yoneticiye yonelik aciklayici metin),
+  - finansal metrik alt-gridi (Annual Savings, CAPEX, ROI/Payback).
+- Zorluk rozeti renk semantigi ile karar hizi arttirildi:
+  - Low: yesil,
+  - Medium: sari/turuncu,
+  - High: kirmizi.
+- Finansal metriklerde para degerleri EUR formatina baglandi; ROI degeri ise yil birimi ile birlikte gosterilerek finansal geri donusun yonetsel yorumlanmasi kolaylastirildi.
+- `potential_subsidies` verisi mevcut oldugunda kartin altinda ayri bir tesvik/grant paneli acilarak bu bilginin gozden kacmasi onlendi.
+- Bu panelde `lucide-react` ikonlari (odul/tesvik metaforu) kullanilarak metin yogunlugu azaltildi ve taranabilirlik guclendirildi.
+
+### 12) AuditTrail Bileseni (Regulator Uyumlu Izlenebilirlik)
+
+- Dashboard icin yeni `AuditTrail` bileseni eklendi; Explainable AI (XAI) adimlari tek bir resmi panelde bir araya getirilerek AB regulator denetimlerine uygun bir kanit katmani olusturuldu.
+- Bilesen, `auditReport` objesi uzerinden calisir:
+  - `steps[]` icinde hesaplama adimlari,
+  - `legal_disclaimer` icinde yasal cerceve/aciklama metni.
+- Ust baslikta resmi/kurumsal bir ton icin hukuk odakli ikon + "Legal & Calculation Audit Trail" basligi kullanildi.
+- Her adim ayri bir blokta sunularak denetim okunabilirligi artirildi; her blokta su bilgi hiyerarsisi izlendi:
+  - solda `step_name`,
+  - sagda belirgin `result_value + unit`,
+  - alt satirda `formula_applied` (monospace code stilinde),
+  - onun altinda `regulation_reference` (muted + italik, kitap ikonu ile).
+- Bu sunum sekli ile "sonuc" tek basina degil, sonuca giden hesaplama izi ve mevzuat dayanagi ile birlikte gosterilir hale geldi.
+- Bilesen altinda yer alan `legal_disclaimer`, raporun hukuki baglamini acikca belirterek yanlis yorum ve baglam kaybi riskini azaltti.
+
+### 13) ExecutiveConsultingReport Ana Akis Entegrasyonu
+
+- Yeni bilesenler upload sonu "analysis completed" gorunumune dogrudan entegre edildi ve mevcut KPI + Tsunami graf ikilisinin altina dogal bir karar akisi eklendi.
+- Render sirasi stratejik olarak su sekilde kurgulandi:
+  1. KPI Cards,
+  2. Tsunami Chart,
+  3. Strategic Action Plan (`RecommendationCards`),
+  4. ayirici cizgi,
+  5. Audit Trail (`AuditTrail`).
+- Bu siralama ile once riskin nicel gosterimi (KPI + projeksiyon), sonra aksiyon plani (oneriler), en sonda kanitlanabilir hesaplama/yasal temel (audit trail) veriliyor.
+- Son ekran artik yalnizca "rapor gosteren" bir UI degil; yonetici karar sureci + regulatora sunulabilir delil zinciri bir arada sunan butunlesik bir panel kimligi kazandi.
+- Teknik olarak entegrasyon, mevcut ExecutiveConsultingReport akisinin davranisini bozmadan (fallback/null-safe render) asamali ve geriye uyumlu sekilde tamamlandi.

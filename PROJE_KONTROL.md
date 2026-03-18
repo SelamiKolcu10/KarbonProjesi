@@ -41,3 +41,43 @@ Fabrikalar için yapay zeka destekli, çoklu ajan (multi-agent) tabanlı otomati
 
 - Güncelleme: `cspell.json` dosyasında genel imla denetimi (yazım hataları) devre dışı bırakıldı. Böylece projeye eklenen yeni kelimeler için hata alınması önlendi.
 
+
+---
+
+## Guncel Durum Ozeti
+
+- Enterprise Upgrade Phase 2 kapsaminda Orchestrator (job lifecycle) katmani eklendi; asenkron denetim islerinin kimliklendirilmesi ve durum takibi icin temel altyapi olusturuldu.
+- Enterprise Upgrade Phase 3 kapsaminda `src/api/main.py` olusturuldu; FastAPI uzerinde async background task tabanli `/api/v1/jobs` submit ve status endpointleri canliya hazir hale getirildi.
+- Enterprise Sprint 2 - Phase 1 kapsaminda ExplainabilityAgent entegre edildi; regulator odakli Audit Trail adimlari (Scope1/Scope2/Process/Precursor/Financial) Executive rapora baglandi.
+- Enterprise Sprint 2 - Phase 2 kapsaminda RegressionAgent (`src/qa/regression_agent.py`) eklendi; Orchestrator uzerinden golden baseline emisyon/vergi regresyon kontrolleri CI/CD uyumlu hale getirildi.
+- Orchestrator katmani icin temel birim test kapsami eklendi; guard red, basarili tamamlama ve hata izolasyonu senaryolari dogrulandi.
+- FastAPI uzerinde Orchestrator job endpointleri (submit/status/process) devreye alindi ve API seviyesinde entegrasyon testleri ile dogrulandi.
+- Frontend upload akisi Orchestrator ile baglandi; submit + polling + final executive report gosterimi tek akista aktif edildi.
+- Data Quality Guard eklendi ve denetim oncesi zorunlu kontrol adimi olusturuldu.
+- Pipeline akisina fail-fast validasyon asamasi eklendi.
+- API tarafinda data quality kurallari icin kodlu 422 cevap modeli aktif edildi.
+- Frontend upload ekraninda data quality ihlalleri daha acik ve aksiyon odakli gosteriliyor.
+- Frontend sayfalarinda i18n kapsam genisletildi.
+- Frontend tarafinda Enterprise API entegrasyonu icin tip guvenli payload/status modelleri ve merkezi axios HTTP client katmani eklendi.
+- Frontend API servis katmaninda Orchestrator job submit ve job status cagri fonksiyonlari tip guvenli sekilde merkezi JobService altinda toplandi.
+- Upload akisi refactor edilerek native fetch cagrilari kaldirildi; merkezi API client/JobService uzerinden ilk job submit, job_id state yonetimi ve Schema Guard uyumlu cbam_allocation_rate (max 0.99, step 0.01) dogrulama girdisi eklendi.
+- Frontend tarafinda yeniden kullanilabilir `useJobPolling` hook'u eklendi; job durumunun periyodik takibi, tamamlanma sonucu yakalama ve hata durumlarinda kontrollu polling sonlandirma akisi standartlastirildi.
+- Upload sayfasi `useJobPolling` ile reaktif hale getirildi; calisan analiz, hata ve tamamlanan analiz sonucunun (ham JSON) UI durumlari backend job status'una bagli olarak otomatik guncelleniyor.
+- ExecutiveConsultingReport ciktilarini gorsellestirmek icin dashboard KPI kart bileseni eklendi; readiness score, 2026 tahmini vergi ve toplam CBAM emisyonu metrikleri tek grid yapisinda sunuluyor.
+- Dashboard tarafinda "CBAM Tsunami Effect" odakli 5 yillik vergi projeksiyon grafigi (Recharts BarChart) eklendi; yillik vergi artisi risk odakli renklerle gorsellestiriliyor.
+- Upload tamamlanma ekranindaki ham JSON cikti kaldirilarak yonetici odakli ozet gorunume gecildi; AI Consultant Summary, KPI kartlari ve 5 yillik vergi projeksiyon grafigi tek akis icinde sunuluyor.
+- Upload tamamlanma deneyimi zenginlestirildi; readiness skoruna bagli risk badge, ozet metadata etiketleri ve veri eksikliginde dayanikli KPI/chart bos durum gostergeleri eklendi.
+- Early Warning katmani guclendirildi; risk rozetleri artik yalnizca readiness skoruna degil backend compliance/risk sinyallerine de baglanarak daha korumaci siniflandirma uretiyor.
+- Upload sonuc ekraninda i18n kapsam genisletildi; Risk/AI Summary/Erken Uyari alanlari ceviri anahtarlariyla yonetilir hale getirildi ve backend sinyal kodlari kullanici dostu etiketlere donusturuldu.
+- Dashboard widget i18n kapsami genisletildi; KPI kart basliklari, N/A durum metinleri ve Tsunami grafik baslik/bos durum mesajlari EN/TR ceviri anahtarlariyla standartlastirildi.
+- KPI ve Tsunami grafik bilesenlerinde sayisal/para formatlama aktif dil ile uyumlu hale getirildi; TR ve EN gorunumlerinde locale bazli gosterim standardi saglandi.
+- Frontend tarafinda merkezi locale formatlama yardimcisi eklendi; upload sonu readiness etiketi ile KPI ve Tsunami grafik formatlari tek utility uzerinden yonetilerek tekrar eden kod azaltildi.
+- README dokumantasyonu detaylandirildi; bugun tamamlanan upload/dashboard entegrasyonlari, risk-sinyal mantigi ve i18n/locale iyilestirmeleri teknik akis bazinda kayit altina alindi.
+- Dashboard icin yeni RecommendationCards bileseni eklendi; strateji bazli aksiyon planlari, zorluk seviyesi rozetleri, finansal metrikler ve tesvik/grant alanlari yonetici odakli kart yapisinda sunulmaya baslandi.
+- Dashboard icin yeni AuditTrail bileseni eklendi; XAI hesaplama adimlari, formuller, mevzuat referanslari ve yasal aciklama metni regulator denetimine uygun izlenebilir bir panelde gosterilmeye baslandi.
+- ExecutiveConsultingReport ana akisinda entegrasyon tamamlandi; Tsunami Chart altina Strategic Action Plan (RecommendationCards) ve altinda AuditTrail paneli eklenerek regulator odakli son ekran butunlugu saglandi.
+
+## Kisa Sonraki Adim
+
+- Bu nottan onceki mevcut plan ve ilerleme maddeleri aynen korunmustur.
+

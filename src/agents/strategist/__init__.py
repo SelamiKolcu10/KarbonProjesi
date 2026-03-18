@@ -14,6 +14,7 @@ Modüller:
 from .compliance_guard import ComplianceGuard, ComplianceRiskReport
 from .simulator import StrategySimulator, Recommendation
 from .chief_consultant import ChiefConsultantAgent, ExecutiveConsultingReport
+from src.agents.explainability import AuditStep, AuditTrailReport, ExplainabilityAgent
 
 __all__ = [
     "ComplianceGuard",
@@ -22,6 +23,9 @@ __all__ = [
     "Recommendation",
     "ChiefConsultantAgent",
     "ExecutiveConsultingReport",
+    "AuditStep",
+    "AuditTrailReport",
+    "ExplainabilityAgent",
 ]
 
 __version__ = "3.0.0"

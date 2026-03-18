@@ -23,9 +23,9 @@ const defaultSettings: Settings = {
   model: "gpt-4o",
   openaiKey: "",
   anthropicKey: "",
-  tesisAdi: "İzmir Çelik Fabrikası A.Ş.",
+  tesisAdi: "Izmir Steel Factory Inc.",
   cbamNo: "TR-CBAM-2024-XXXXX",
-  konum: "Türkiye / İzmir",
+  konum: "Turkey / Izmir",
 };
 
 function loadSettings(): Settings {
@@ -86,9 +86,9 @@ export default function SettingsPage() {
                 onChange={(e) => update("modelProvider", e.target.value)}
                 className="w-full h-9 px-3 rounded-md bg-input border border-border text-sm text-foreground"
               >
-                <option value="openai">OpenAI (GPT-4)</option>
-                <option value="anthropic">Anthropic (Claude)</option>
-                <option value="azure">Azure OpenAI</option>
+                <option value="openai">{t("settings.providerOpenai")}</option>
+                <option value="anthropic">{t("settings.providerAnthropic")}</option>
+                <option value="azure">{t("settings.providerAzure")}</option>
               </select>
             </div>
             <div>
@@ -128,7 +128,7 @@ export default function SettingsPage() {
                 type="password"
                 value={settings.openaiKey}
                 onChange={(e) => update("openaiKey", e.target.value)}
-                placeholder="sk-..."
+                placeholder={t("settings.openaiPlaceholder")}
                 className="w-full h-9 px-3 rounded-md bg-input border border-border text-sm text-foreground font-mono"
               />
             </div>
@@ -138,7 +138,7 @@ export default function SettingsPage() {
                 type="password"
                 value={settings.anthropicKey}
                 onChange={(e) => update("anthropicKey", e.target.value)}
-                placeholder="sk-ant-..."
+                placeholder={t("settings.anthropicPlaceholder")}
                 className="w-full h-9 px-3 rounded-md bg-input border border-border text-sm text-foreground font-mono"
               />
             </div>

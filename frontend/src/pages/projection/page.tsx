@@ -298,7 +298,7 @@ export default function ProjectionPage() {
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <Target className="w-6 h-6 text-primary" />
-            Emisyon Projeksiyon Aracı
+            {t("projection.toolTitle")}
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
             {t("projection.subtitle")}
@@ -309,7 +309,7 @@ export default function ProjectionPage() {
           className="self-start sm:self-auto border-amber-500/40 text-amber-400 bg-amber-500/10 px-3 py-1"
         >
           <AlertCircle className="w-3.5 h-3.5 mr-1.5" />
-          Baz Yıl: 2025 Q1 Verisi
+          {t("projection.baseYearBadge")}
         </Badge>
       </motion.div>
 
@@ -325,7 +325,7 @@ export default function ProjectionPage() {
           />
           <KpiCard
             icon={TrendingDown}
-            title="Optimize Senaryo Vergisi"
+            title={t("projection.optimizedScenarioTax")}
             value={fmtEur(totalOptVergi)}
             sub={t("projection.baseCumulative")}
             color="bg-emerald-500/80"
@@ -335,7 +335,7 @@ export default function ProjectionPage() {
             icon={Leaf}
             title={t("projection.totalSavings")}
             value={fmtEur(totalTasarruf)}
-            sub={`Kümülatif ${fmt(avgAzaltma)}% ${t("projection.emissionReduction")}`}
+            sub={t("projection.cumulativeReductionSub", { value: fmt(avgAzaltma), label: t("projection.emissionReduction") })}
             color="bg-primary/80"
             delay={0.15}
           />
@@ -363,7 +363,7 @@ export default function ProjectionPage() {
               </CardTitle>
               <div className="flex items-center gap-2">
                 <span className="text-xs text-muted-foreground hidden sm:block">
-                  Karbon Fiyatı: €{karbonFiyat}/tCO₂
+                  {t("projection.carbonPriceLabel", { price: karbonFiyat })}
                 </span>
                 {controlsOpen ? (
                   <ChevronUp className="w-4 h-4 text-muted-foreground" />
@@ -413,20 +413,20 @@ export default function ProjectionPage() {
                 {/* Carbon price scenario */}
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-foreground">
-                    Karbon Fiyat Senaryosu
+                    {t("projection.carbonPriceScenario")}
                   </Label>
                   <p className="text-xs text-muted-foreground">
-                    EU ETS referanslı tahmini karbon fiyatı (€/tCO₂)
+                    {t("projection.carbonPriceDescription")}
                   </p>
                   <Select value={karbonSenaryosu} onValueChange={setKarbonSenaryosu}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="asgari">Asgari — €40/tCO₂ (düşük tahmin)</SelectItem>
-                      <SelectItem value="dusuk">Düşük — €55/tCO₂</SelectItem>
-                      <SelectItem value="orta">Orta — €85/tCO₂ (baz)</SelectItem>
-                      <SelectItem value="yuksek">Yüksek — €120/tCO₂ (stres testi)</SelectItem>
+                      <SelectItem value="asgari">{t("projection.scenarioMinimum")}</SelectItem>
+                      <SelectItem value="dusuk">{t("projection.scenarioLow")}</SelectItem>
+                      <SelectItem value="orta">{t("projection.scenarioMedium")}</SelectItem>
+                      <SelectItem value="yuksek">{t("projection.scenarioHigh")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -437,7 +437,7 @@ export default function ProjectionPage() {
                     {t("projection.measureStartYear")}
                   </Label>
                   <p className="text-xs text-muted-foreground">
-                    Azaltım önlemlerinin uygulamaya girdiği yıl
+                    {t("projection.measureStartDescription")}
                   </p>
                   <Select
                     value={String(onlemBaslangic)}
@@ -461,15 +461,15 @@ export default function ProjectionPage() {
                 <div className="flex items-start gap-2 bg-primary/10 border border-primary/20 rounded-xl p-3">
                   <Info className="w-4 h-4 text-primary mt-0.5 shrink-0" />
                   <div className="text-xs text-muted-foreground space-y-1">
-                    <p className="text-foreground font-medium">Hesaplama Metodolojisi</p>
+                    <p className="text-foreground font-medium">{t("projection.calculationMethodology")}</p>
                     <p>
-                      Emisyon = Yoğunluk × Üretim × (1−azaltma)^yıl
+                      {t("projection.formulaEmission")}
                     </p>
                     <p>
-                      CBAM Vergisi = Emisyon × Karbon Fiyatı × Faz Faktörü / 100
+                      {t("projection.formulaTax")}
                     </p>
                     <p className="text-amber-400">
-                      * Projeksiyon tahminidir, resmi CBAM hesabı değildir.
+                      {t("projection.formulaDisclaimer")}
                     </p>
                   </div>
                 </div>
@@ -503,7 +503,7 @@ export default function ProjectionPage() {
           )}
         >
           <Euro className="w-3.5 h-3.5 inline mr-1.5" />
-          CBAM Vergi Projeksiyonu
+          {t("projection.taxProjectionTitle")}
         </button>
       </div>
 
@@ -519,9 +519,9 @@ export default function ProjectionPage() {
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
                 <Leaf className="w-4 h-4 text-emerald-400" />
-                Emisyon Projeksiyonu (tCO₂e)
+                {t("projection.emissionProjectionTitle")}
                 <Badge className="ml-auto bg-white/5 text-muted-foreground border-white/10 text-xs font-normal">
-                  CBAM Faz Faktörü ile
+                  {t("projection.withCbamFactor")}
                 </Badge>
               </CardTitle>
             </CardHeader>
@@ -561,7 +561,7 @@ export default function ProjectionPage() {
                     stroke="#F59E0B"
                     strokeDasharray="5 4"
                     label={{
-                      value: `Önlem Başlangıcı`,
+                      value: t("projection.measureStartMarker"),
                       fill: "#F59E0B",
                       fontSize: 11,
                       position: "insideTopRight",
@@ -570,7 +570,7 @@ export default function ProjectionPage() {
                   <Area
                     type="monotone"
                     dataKey="bazEmisyon"
-                    name="Baz Senaryo"
+                    name={t("projection.baseScenario")}
                     fill="url(#bazGrad)"
                     stroke="#EF4444"
                     strokeWidth={2}
@@ -579,7 +579,7 @@ export default function ProjectionPage() {
                   <Area
                     type="monotone"
                     dataKey="optimizeEmisyon"
-                    name="Optimize Senaryo"
+                    name={t("projection.optimizedScenario")}
                     fill="url(#optGrad)"
                     stroke="#10B981"
                     strokeWidth={2.5}
@@ -588,7 +588,7 @@ export default function ProjectionPage() {
                   <Line
                     type="monotone"
                     dataKey="hedefEmisyon"
-                    name="Hedef Emisyon"
+                    name={t("projection.targetEmission")}
                     stroke="#8B5CF6"
                     strokeWidth={2}
                     strokeDasharray="6 3"
@@ -613,9 +613,9 @@ export default function ProjectionPage() {
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
                 <Euro className="w-4 h-4 text-amber-400" />
-                CBAM Vergi Projeksiyonu (€)
+                {t("projection.taxProjectionTitle")} (€)
                 <Badge className="ml-auto bg-amber-500/10 text-amber-400 border-amber-500/30 text-xs font-normal">
-                  Karbon Fiyatı: €{karbonFiyat}/tCO₂
+                  {t("projection.carbonPriceLabel", { price: karbonFiyat })}
                 </Badge>
               </CardTitle>
             </CardHeader>
@@ -647,7 +647,7 @@ export default function ProjectionPage() {
                     stroke="#F59E0B"
                     strokeDasharray="5 4"
                     label={{
-                      value: `Önlem Başlangıcı`,
+                      value: t("projection.measureStartMarker"),
                       fill: "#F59E0B",
                       fontSize: 11,
                       position: "insideTopRight",
@@ -655,14 +655,14 @@ export default function ProjectionPage() {
                   />
                   <Bar
                     dataKey="bazVergi"
-                    name="Baz Senaryo Vergisi"
+                    name={t("projection.baseScenarioTax")}
                     fill="#EF4444"
                     fillOpacity={0.7}
                     radius={[3, 3, 0, 0]}
                   />
                   <Bar
                     dataKey="optimizeVergi"
-                    name="Optimize Senaryo Vergisi"
+                    name={t("projection.optimizedScenarioTax")}
                     fill="#10B981"
                     fillOpacity={0.8}
                     radius={[3, 3, 0, 0]}
@@ -689,7 +689,7 @@ export default function ProjectionPage() {
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <Zap className="w-4 h-4 text-primary" />
-              Yıllık Projeksiyon Tablosu
+              {t("projection.yearlyProjectionTable")}
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
@@ -742,13 +742,13 @@ export default function ProjectionPage() {
                           {row.yil}
                           {isOnlemYil && (
                             <Badge className="ml-1.5 text-[10px] bg-amber-500/20 text-amber-400 border-amber-500/30">
-                              Başlangıç
+                              {t("projection.startBadge")}
                             </Badge>
                           )}
                           {isBreakEven && (
                             <Badge className="ml-1.5 text-[10px] bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
                               <CheckCircle2 className="w-2.5 h-2.5 mr-0.5" />
-                              Başabaş
+                              {t("projection.breakEvenBadge")}
                             </Badge>
                           )}
                         </td>
@@ -799,7 +799,7 @@ export default function ProjectionPage() {
                 <tfoot>
                   <tr className="border-t border-white/20 bg-white/5">
                     <td colSpan={5} className="px-4 py-3 text-xs font-bold text-foreground">
-                      TOPLAM (2026–2034)
+                      {t("projection.totalRange")}
                     </td>
                     <td className="px-4 py-3 text-red-400 font-mono text-xs font-bold">
                       {fmtEur(totalBazVergi)}
@@ -808,7 +808,7 @@ export default function ProjectionPage() {
                       {fmtEur(totalOptVergi)}
                     </td>
                     <td colSpan={2} className="px-4 py-3 text-primary font-mono text-xs font-bold">
-                      {fmtEur(totalTasarruf)} tasarruf
+                      {t("projection.savingsValue", { value: fmtEur(totalTasarruf) })}
                     </td>
                   </tr>
                 </tfoot>
@@ -829,12 +829,12 @@ export default function ProjectionPage() {
               <div>
                 <p className="text-sm font-semibold text-foreground">
                   {firstSavingYear
-                    ? `${firstSavingYear} yılında yıllık €50.000+ tasarruf başlıyor`
+                    ? t("projection.firstSavingYearMessage", { year: firstSavingYear })
                     : t("projection.adjustParameters")}
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {breakEvenRow
-                    ? `Tahmini yatırım geri dönüşü ${breakEvenRow.yil} yılında gerçekleşiyor (capex: ${fmtEur(estimatedCapex)})`
+                    ? t("projection.estimatedReturnMessage", { year: breakEvenRow.yil, capex: fmtEur(estimatedCapex) })
                     : t("projection.moveStartEarlier")}
                 </p>
               </div>
@@ -842,7 +842,7 @@ export default function ProjectionPage() {
             <div className="flex items-center gap-2 shrink-0">
               <Badge className="bg-primary/20 text-primary border-primary/30">
                 <ArrowRight className="w-3 h-3 mr-1" />
-                Strateji Sayfasına Git
+                {t("projection.goToStrategy")}
               </Badge>
             </div>
           </CardContent>

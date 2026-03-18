@@ -120,14 +120,14 @@ function RiskGauge({ score }: { score: number }) {
         <text x={cx} y={cy - 1} textAnchor="middle" fill="oklch(0.55 0.02 240)" fontSize={9}>
           / 100
         </text>
-        <text x={14} y={95} fill="oklch(0.55 0.02 240)" fontSize={8}>Düşük</text>
-        <text x={155} y={95} fill="oklch(0.55 0.02 240)" fontSize={8} textAnchor="end">Yüksek</text>
+        <text x={14} y={95} fill="oklch(0.55 0.02 240)" fontSize={8}>{t("strategy.low")}</text>
+        <text x={155} y={95} fill="oklch(0.55 0.02 240)" fontSize={8} textAnchor="end">{t("strategy.high")}</text>
       </svg>
       <Badge className={cn("mt-1 text-xs px-3 py-1", badgeBg)}>
         {riskLabel}
       </Badge>
       <p className={cn("text-2xl font-bold mt-2 tabular-nums", riskColor)}>{clamp}</p>
-      <p className="text-xs text-muted-foreground">CBAM Uyumluluk Risk Skoru</p>
+      <p className="text-xs text-muted-foreground">{t("strategy.cbamRiskScore")}</p>
     </div>
   );
 }
@@ -137,14 +137,14 @@ type Difficulty = "düşük" | "orta" | "yüksek";
 type Priority   = "düşük" | "orta" | "yüksek";
 
 const difficultyConfig: Record<Difficulty, { label: string; class: string }> = {
-  düşük:   { label: "Düşük",   class: "bg-green-500/15 text-green-400 border-green-500/25"  },
-  orta:    { label: "Orta",    class: "bg-yellow-500/15 text-yellow-400 border-yellow-500/25" },
-  yüksek:  { label: "Yüksek",  class: "bg-red-500/15 text-red-400 border-red-500/25"        },
+  düşük:   { label: "strategy.low",   class: "bg-green-500/15 text-green-400 border-green-500/25"  },
+  orta:    { label: "strategy.medium", class: "bg-yellow-500/15 text-yellow-400 border-yellow-500/25" },
+  yüksek:  { label: "strategy.high",   class: "bg-red-500/15 text-red-400 border-red-500/25"        },
 };
 const priorityConfig: Record<Priority, { label: string; class: string }> = {
-  yüksek: { label: "Yüksek",  class: "bg-primary/15 text-primary border-primary/25"          },
-  orta:   { label: "Orta",    class: "bg-blue-500/15 text-blue-400 border-blue-500/25"        },
-  düşük:  { label: "Düşük",   class: "bg-muted text-muted-foreground border-border"           },
+  yüksek: { label: "strategy.high",   class: "bg-primary/15 text-primary border-primary/25"          },
+  orta:   { label: "strategy.medium", class: "bg-blue-500/15 text-blue-400 border-blue-500/25"        },
+  düşük:  { label: "strategy.low",    class: "bg-muted text-muted-foreground border-border"           },
 };
 
 // ─── Simulation Panel ────────────────────────────────────────────────────────────
@@ -181,17 +181,17 @@ function SimulationPanel({
           <div className="flex items-center gap-2">
             <Calculator className="w-4 h-4 text-primary" />
             <CardTitle className="text-sm font-semibold text-foreground">
-              Anlık Simülasyon — {selected.length} senaryo seçildi
+              {t("strategy.liveSimulation", { count: selected.length })}
             </CardTitle>
           </div>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-4 gap-3 mb-4">
             {[
-              { label: "Emisyon Tasarrufu", value: `${fmt(savedEmission)} tCO₂e`, color: "text-green-400", icon: <Leaf className="w-3.5 h-3.5" /> },
-              { label: "Mali Kazanç", value: fmtEur(savedMoney), color: "text-green-400", icon: <Euro className="w-3.5 h-3.5" /> },
-              { label: "Yeni Emisyon", value: `${fmt(newEmission)} tCO₂e`, color: "text-foreground", icon: <BarChart3 className="w-3.5 h-3.5" /> },
-              { label: "Yeni Vergi", value: fmtEur(newTax), color: "text-foreground", icon: <Euro className="w-3.5 h-3.5" /> },
+              { label: t("strategy.emissionSavings"), value: `${fmt(savedEmission)} tCO₂e`, color: "text-green-400", icon: <Leaf className="w-3.5 h-3.5" /> },
+              { label: t("strategy.financialGain"), value: fmtEur(savedMoney), color: "text-green-400", icon: <Euro className="w-3.5 h-3.5" /> },
+              { label: t("strategy.newEmission"), value: `${fmt(newEmission)} tCO₂e`, color: "text-foreground", icon: <BarChart3 className="w-3.5 h-3.5" /> },
+              { label: t("strategy.newTax"), value: fmtEur(newTax), color: "text-foreground", icon: <Euro className="w-3.5 h-3.5" /> },
             ].map((item) => (
               <div key={item.label} className="p-3 rounded-lg bg-muted/30 border border-border/50 text-center">
                 <div className={cn("flex items-center justify-center gap-1 mb-1", item.color)}>{item.icon}</div>
@@ -223,7 +223,7 @@ function SimulationPanel({
             <div className="flex-1 space-y-2">
               <div>
                 <div className="flex justify-between text-xs mb-1">
-                  <span className="text-muted-foreground">Emisyon Azalması</span>
+                  <span className="text-muted-foreground">{t("strategy.emissionReduction")}</span>
                   <span className="text-green-400 font-bold">{reduction.toFixed(1)}%</span>
                 </div>
                 <div className="h-2 bg-muted/50 rounded-full overflow-hidden">
@@ -237,7 +237,7 @@ function SimulationPanel({
               </div>
               <div>
                 <div className="flex justify-between text-xs mb-1">
-                  <span className="text-muted-foreground">Vergi Tasarrufu</span>
+                  <span className="text-muted-foreground">{t("strategy.taxSavings")}</span>
                   <span className="text-green-400 font-bold">
                     {totalTax > 0 ? ((savedMoney / totalTax) * 100).toFixed(1) : 0}%
                   </span>
@@ -281,7 +281,7 @@ function ScenarioTable() {
                 {t("strategy.scenarioAnalysis")}
               </CardTitle>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Senaryoları seçin → anlık simülasyon hesaplanır
+                {t("strategy.selectScenarioHint")}
               </p>
             </div>
             {selected.length > 0 && (
@@ -291,7 +291,7 @@ function ScenarioTable() {
                 className="text-xs text-muted-foreground h-7"
                 onClick={() => setScenarios((prev) => prev.map((s) => ({ ...s, secili: false })))}
               >
-                Temizle
+                {t("strategy.clear")}
               </Button>
             )}
           </div>
@@ -301,7 +301,7 @@ function ScenarioTable() {
             <thead>
               <tr className="border-b border-border bg-muted/30">
                 <th className="w-10 px-4 py-2.5" />
-                <th className="text-left text-muted-foreground font-medium px-4 py-2.5">Senaryo</th>
+                <th className="text-left text-muted-foreground font-medium px-4 py-2.5">{t("strategy.scenario")}</th>
                 <th className="text-right text-muted-foreground font-medium px-4 py-2.5">{t("strategy.emissionReduction")}</th>
                 <th className="text-right text-muted-foreground font-medium px-4 py-2.5">{t("strategy.financialGain")}</th>
                 <th className="text-center text-muted-foreground font-medium px-4 py-2.5">{t("strategy.implementationTime")}</th>
@@ -352,12 +352,12 @@ function ScenarioTable() {
                   </td>
                   <td className="px-4 py-3 text-center">
                     <Badge className={cn("text-[10px] px-1.5", difficultyConfig[sc.zorluk as Difficulty].class)}>
-                      {difficultyConfig[sc.zorluk as Difficulty].label}
+                      {t(difficultyConfig[sc.zorluk as Difficulty].label)}
                     </Badge>
                   </td>
                   <td className="px-4 py-3 text-center">
                     <Badge className={cn("text-[10px] px-1.5", priorityConfig[sc.oncelik as Priority].class)}>
-                      {priorityConfig[sc.oncelik as Priority].label}
+                      {t(priorityConfig[sc.oncelik as Priority].label)}
                     </Badge>
                   </td>
                 </tr>
@@ -382,6 +382,7 @@ function ScenarioTable() {
 
 // ─── CBAM Timeline Chart ─────────────────────────────────────────────────────────
 function CbamTimelineChart() {
+  const { t } = useTranslation();
   const [hovered, setHovered] = useState<number | null>(null);
 
   const areaData = mockCbamTimeline.map((d) => ({
@@ -397,14 +398,14 @@ function CbamTimelineChart() {
           <div>
             <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
               <TrendingDown className="w-4 h-4 text-primary" />
-              CBAM Phase-in Takvimi
+              {t("strategy.cbamTimeline")}
             </CardTitle>
             <p className="text-xs text-muted-foreground mt-0.5">
-              2026–2034 · %2,5'ten %100'e kademeli uygulama
+              {t("strategy.cbamTimelineSubtitle")}
             </p>
           </div>
           <Badge className="bg-primary/15 text-primary border-primary/25 text-[10px] px-2">
-            Şu an: 2026 · %2,5
+            {t("strategy.currentPeriod")}
           </Badge>
         </div>
       </CardHeader>
@@ -436,9 +437,9 @@ function CbamTimelineChart() {
                 active && payload?.[0] ? (
                   <div className="bg-card border border-border rounded-lg p-2 shadow-xl text-xs">
                     <p className="text-muted-foreground">{label}</p>
-                    <p className="text-foreground font-bold">CBAM Faz: %{payload[0].value}</p>
+                    <p className="text-foreground font-bold">{t("strategy.cbamPhaseValue", { value: payload[0].value })}</p>
                     {label === "2026" && (
-                      <p className="text-primary text-[10px] mt-0.5">← Şu anki dönem</p>
+                      <p className="text-primary text-[10px] mt-0.5">{t("strategy.currentPeriodHint")}</p>
                     )}
                   </div>
                 ) : null
@@ -503,10 +504,11 @@ function CbamTimelineChart() {
         <div className="flex items-start gap-2.5 mt-4 p-3 rounded-lg bg-yellow-500/8 border border-yellow-500/20">
           <AlertTriangle className="w-4 h-4 text-yellow-400 flex-shrink-0 mt-0.5" />
           <div>
-            <p className="text-xs font-semibold text-yellow-400">Aciliyet: CBAM 2026 başlıyor</p>
+            <p className="text-xs font-semibold text-yellow-400">{t("strategy.urgencyTitle")}</p>
             <p className="text-[11px] text-muted-foreground mt-0.5">
-              Şu an %2,5 oranında uygulanmakta. 2034'e kadar her yıl artacak olan bu oran,
-              harekete geçmemeniz durumunda toplam yükümlülüğünüzü yaklaşık <span className="text-red-400 font-semibold">40 kat</span> artırabilir.
+              {t("strategy.urgencyBodyPrefix")}
+              <span className="text-red-400 font-semibold">{t("strategy.urgencyMultiplier")}</span>
+              {t("strategy.urgencyBodySuffix")}
             </p>
           </div>
         </div>
@@ -556,8 +558,8 @@ export default function StrategyPage() {
             <div className="grid grid-cols-3 gap-2 mt-6 w-full px-4">
               {[
                 { label: "0–33", color: "bg-green-500/60", text: t("strategy.safe") },
-                { label: "34–66", color: "bg-yellow-500/60", text: "Dikkat" },
-                { label: "67–100", color: "bg-red-500/60", text: "Kritik" },
+                { label: "34–66", color: "bg-yellow-500/60", text: t("common.attention") },
+                { label: "67–100", color: "bg-red-500/60", text: t("common.critical") },
               ].map((item) => (
                 <div key={item.label} className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
                   <span className={cn("w-2 h-2 rounded-sm flex-shrink-0", item.color)} />
@@ -586,7 +588,7 @@ export default function StrategyPage() {
                   </div>
                   <div>
                     <CardTitle className="text-sm font-semibold text-foreground">{t("strategy.aiSummary")}</CardTitle>
-                    <p className="text-[10px] text-muted-foreground">Ajan 3 — yönetici özeti</p>
+                    <p className="text-[10px] text-muted-foreground">{t("strategy.agentSummaryCaption")}</p>
                   </div>
                 </div>
                 {aiOpen

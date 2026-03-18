@@ -263,7 +263,7 @@ function EmissionTable() {
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1.5 text-[10px] text-yellow-400">
               <span className="w-2 h-2 bg-yellow-500/40 rounded border border-yellow-500/50 inline-block" />
-              Anomali
+              {t("emission.anomaly")}
             </div>
           </div>
         </div>
@@ -276,9 +276,9 @@ function EmissionTable() {
                 <th className="text-left text-muted-foreground font-medium px-4 py-2.5">{t("emission.emissionSource")}</th>
                 <th className="text-right text-muted-foreground font-medium px-4 py-2.5">{t("emission.quantity")}</th>
                 <th className="text-left text-muted-foreground font-medium px-4 py-2.5">{t("emission.unit")}</th>
-                <th className="text-right text-muted-foreground font-medium px-4 py-2.5">kg CO₂</th>
+                <th className="text-right text-muted-foreground font-medium px-4 py-2.5">{t("emission.kgCO2")}</th>
                 <th className="text-right text-muted-foreground font-medium px-4 py-2.5">tCO₂e</th>
-                <th className="text-center text-muted-foreground font-medium px-4 py-2.5">Durum</th>
+                <th className="text-center text-muted-foreground font-medium px-4 py-2.5">{t("emission.status")}</th>
               </tr>
             </thead>
             <tbody>
@@ -312,16 +312,16 @@ function EmissionTable() {
                     {row.anomali ? (
                       <div className="group relative inline-block">
                         <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 text-[10px] cursor-help">
-                          Anomali
+                          {t("emission.anomaly")}
                         </Badge>
                         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-card border border-yellow-500/30 rounded-lg p-2 text-[10px] text-foreground shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 text-left">
-                          <p className="font-semibold text-yellow-400 mb-1">⚠ Anomali Tespit Edildi</p>
+                          <p className="font-semibold text-yellow-400 mb-1">{t("emission.anomalyDetectedTitle")}</p>
                           <p className="text-muted-foreground">{row.anomaliMesaj}</p>
                         </div>
                       </div>
                     ) : (
                       <Badge className="bg-green-500/15 text-green-400 border-green-500/25 text-[10px]">
-                        Normal
+                        {t("common.normal")}
                       </Badge>
                     )}
                   </td>
@@ -362,7 +362,7 @@ function MaliEtkiCard() {
             { label: t("emission.cbamPhaseFactor"), value: `%${mockMaliEtki.cbamFazFaktoru}`, sub: t("emission.startRate2026"), color: "text-yellow-400" },
             { label: t("emission.grossTaxLiability"), value: fmtEur(mockMaliEtki.brutVergi), sub: t("emission.calculatedTotal"), color: "text-red-400" },
             { label: t("emission.effectiveTax"), value: fmtEur(mockMaliEtki.efektifVergi), sub: t("emission.afterCredits"), color: "text-orange-400" },
-            { label: t("emission.costPerTonSteel"), value: `€${mockMaliEtki.celikBasinaMaliyet.toFixed(2)}/ton`, sub: `${fmt(mockMaliEtki.uretimMiktari)} ton üretim`, color: "text-foreground" },
+            { label: t("emission.costPerTonSteel"), value: `€${mockMaliEtki.celikBasinaMaliyet.toFixed(2)}/ton`, sub: t("emission.tonProduction", { value: fmt(mockMaliEtki.uretimMiktari) }), color: "text-foreground" },
           ].map((item) => (
             <div key={item.label} className="p-3 rounded-lg bg-muted/30 border border-border/50">
               <p className="text-[10px] text-muted-foreground mb-1">{item.label}</p>
@@ -399,7 +399,7 @@ function MaliEtkiCard() {
                   </p>
                   {item.aktif && (
                     <Badge className="bg-primary/20 text-primary border-primary/30 text-[8px] px-1 py-0 absolute -bottom-5 whitespace-nowrap">
-                      Şu an
+                      {t("emission.current")}
                     </Badge>
                   )}
                 </div>
@@ -426,7 +426,7 @@ function AuditTrail() {
           <div className="flex items-center gap-2">
             <Clock className="w-4 h-4 text-muted-foreground" />
             <CardTitle className="text-sm font-semibold text-foreground">{t("emission.auditTrail")}</CardTitle>
-            <Badge variant="secondary" className="text-[10px]">{mockAuditTrail.length} kayıt</Badge>
+            <Badge variant="secondary" className="text-[10px]">{t("emission.recordCount", { count: mockAuditTrail.length })}</Badge>
           </div>
           {open ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
         </button>
@@ -480,19 +480,19 @@ export default function EmissionPage() {
         <div>
           <h2 className="text-xl font-bold text-foreground">{t("emission.title")}</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Ajan 2 çıktısı — 2025 Q1 · İzmir Çelik Fabrikası A.Ş.
+            {t("emission.headerSummary")}
           </p>
         </div>
         <div className="flex items-center gap-2">
           {anomalyCount > 0 && (
             <Badge className="bg-yellow-500/15 text-yellow-400 border-yellow-500/30 gap-1.5 px-3 py-1.5">
               <AlertCircle className="w-3.5 h-3.5" />
-              {anomalyCount} Anomali Tespit Edildi
+              {t("emission.anomalyCountDetected", { count: anomalyCount })}
             </Badge>
           )}
           <Badge className="bg-muted text-muted-foreground border-border gap-1.5 px-3 py-1.5">
             <BarChart3 className="w-3.5 h-3.5" />
-            124.850 tCO₂e Toplam
+            {t("emission.totalValueLabel")}
           </Badge>
         </div>
       </motion.div>

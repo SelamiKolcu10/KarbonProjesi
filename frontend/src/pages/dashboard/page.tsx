@@ -159,7 +159,7 @@ export default function Dashboard() {
         <KpiCard
           title={t("dashboard.emissionIntensity")}
           value={mockKpiData.emissionIntensity.toFixed(2)}
-          unit="tCO₂/ton çelik"
+          unit={t("dashboard.emissionIntensityUnit")}
           change={mockKpiData.emissionIntensityChange}
           status="yellow"
           icon={<BarChart3 className="w-4 h-4" />}
@@ -319,7 +319,7 @@ export default function Dashboard() {
                     <tr key={r.id} className="border-b border-border/50 last:border-0 hover:bg-accent/30 transition-colors">
                       <td className="py-2.5 text-foreground">{r.tesis}</td>
                       <td className="py-2.5 text-muted-foreground">{new Intl.DateTimeFormat("tr-TR", { dateStyle: "short" }).format(new Date(r.tarih))}</td>
-                      <td className="py-2.5 text-right text-foreground tabular-nums">{formatNumber(r.emisyon)} tCO₂e</td>
+                      <td className="py-2.5 text-right text-foreground tabular-nums">{formatNumber(r.emisyon)} {t("dashboard.emissionUnit")}</td>
                       <td className="py-2.5 text-right text-foreground tabular-nums">{formatCurrency(r.cbamVergi)}</td>
                       <td className="py-2.5 text-center">
                         <Badge className={cn("text-[10px] px-1.5",

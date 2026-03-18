@@ -8,14 +8,15 @@ import os
 import sys
 import re
 import json
+import importlib.util
 import tempfile
 import shutil
 import logging
 from pathlib import Path
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List, Dict, Any
 
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -25,9 +26,15 @@ PROJECT_ROOT = Path(__file__).parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.config import Config
+from src.pipeline import map_extraction_to_payload
+from src.agents.auditor.models import InputPayload
+from src.agents.guards import DataQualityGuard
+from src.orchestration import Orchestrator, JobStatus
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
+
+orchestrator = Orchestrator()
 
 app = FastAPI(
     title="Karbon Salınımı API",
@@ -46,6 +53,25 @@ app.add_middleware(
 
 ALLOWED_EXTENSIONS = {".pdf", ".xlsx", ".xls", ".csv"}
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50 MB
+
+
+QUALITY_ERROR_CODES = {
+    "Critical Anomaly: Energy consumption detected while production is zero.": "DQ_ZERO_PRODUCTION_ENERGY_CONFLICT",
+    "Data Quality Error: Energy intensity per ton is physically improbable. Check your units.": "DQ_EXTREME_ENERGY_INTENSITY",
+    "Insufficient Data: A factory must consume at least some energy.": "DQ_MISSING_CORE_ENERGY_DATA",
+    "Data Quality Error: cbam_allocation_rate must be strictly between 0.01 and 1.0.": "DQ_INVALID_ALLOCATION_RATE",
+}
+
+
+def _map_quality_errors(errors: List[str]) -> List[Dict[str, Any]]:
+    """Convert guard messages to API-friendly error code objects."""
+    mapped = []
+    for msg in errors:
+        mapped.append({
+            "code": QUALITY_ERROR_CODES.get(msg, "DQ_VALIDATION_FAILED"),
+            "message": msg,
+        })
+    return mapped
 
 
 def extract_text_from_pdf_basic(file_path: str) -> dict:
@@ -144,9 +170,8 @@ def extract_data_from_excel(file_path: str, extension: str) -> dict:
             "column_language": column_language,
         }
     else:
-        try:
-            import openpyxl  # noqa: F401
-        except ImportError:
+        # openpyxl is an optional runtime dependency for xlsx/xls support.
+        if importlib.util.find_spec("openpyxl") is None:
             raise HTTPException(status_code=500, detail="openpyxl yüklü değil. 'pip install openpyxl' çalıştırın.")
 
         xls = pd.ExcelFile(file_path)
@@ -262,6 +287,41 @@ async def upload_document(file: UploadFile = File(...)):
             if llm_result:
                 result["structured_data"] = llm_result
                 result["extraction_mode"] = "LLM"
+
+                # Business-logic validation (DataQualityGuard) on structured payload
+                try:
+                    payload = map_extraction_to_payload(llm_result)
+                    guard = DataQualityGuard()
+                    passed, errors = guard.validate_business_logic(payload)
+
+                    if not passed:
+                        raise HTTPException(
+                            status_code=422,
+                            detail={
+                                "error": "DATA_QUALITY_VALIDATION_FAILED",
+                                "errors": _map_quality_errors(errors),
+                            },
+                        )
+
+                    result["data_quality"] = {
+                        "passed": True,
+                        "errors": [],
+                    }
+                    # Frontend can submit this directly to orchestrator endpoints.
+                    result["structured_payload"] = payload.model_dump(mode="json")
+                except HTTPException:
+                    raise
+                except Exception as e:
+                    logger.warning(f"Data quality validation skipped due to mapping/validation error: {e}")
+                    result["data_quality"] = {
+                        "passed": False,
+                        "errors": [
+                            {
+                                "code": "DQ_VALIDATION_PIPELINE_ERROR",
+                                "message": "Data quality validation could not be completed.",
+                            }
+                        ],
+                    }
             else:
                 result["extraction_mode"] = "basic"
 
@@ -302,6 +362,69 @@ async def health_check():
             "file_cleanup": True,
         }
     }
+
+
+@app.post("/api/validate-payload")
+async def validate_payload(payload: InputPayload):
+    """Validate InputPayload with DataQualityGuard business rules."""
+    guard = DataQualityGuard()
+    passed, errors = guard.validate_business_logic(payload)
+
+    if not passed:
+        return JSONResponse(
+            status_code=422,
+            content={
+                "valid": False,
+                "error": "DATA_QUALITY_VALIDATION_FAILED",
+                "errors": _map_quality_errors(errors),
+            },
+        )
+
+    return {
+        "valid": True,
+        "errors": [],
+    }
+
+
+@app.post("/api/orchestrator/jobs")
+async def submit_orchestrator_job(payload: InputPayload, background_tasks: BackgroundTasks):
+    """Submit a job to orchestrator and process it asynchronously if accepted."""
+    job_id = orchestrator.submit_job(payload)
+    job = orchestrator.get_job_status(job_id)
+
+    if job.status == JobStatus.PENDING:
+        background_tasks.add_task(orchestrator.process_job, job_id, payload)
+
+    return {
+        "job_id": job_id,
+        "status": job.status.value,
+        "created_at": job.created_at.isoformat(),
+        "error_message": job.error_message,
+    }
+
+
+@app.get("/api/orchestrator/jobs/{job_id}")
+async def get_orchestrator_job_status(job_id: str):
+    """Fetch current status/result for a submitted orchestrator job."""
+    try:
+        job = orchestrator.get_job_status(job_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+    return job.model_dump(mode="json")
+
+
+@app.post("/api/orchestrator/jobs/{job_id}/process")
+async def process_orchestrator_job(job_id: str, payload: InputPayload):
+    """Manually process an already-submitted job (MVP helper endpoint)."""
+    try:
+        orchestrator.get_job_status(job_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+    orchestrator.process_job(job_id, payload)
+    job = orchestrator.get_job_status(job_id)
+    return job.model_dump(mode="json")
 
 
 # --- Frontend Static Files (tek port) ---

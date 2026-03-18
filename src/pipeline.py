@@ -21,6 +21,7 @@ import json
 from .agents.data_extractor import DataExtractor
 from .agents.auditor import AuditorEngine
 from .agents.auditor.models import InputPayload, ProcessInputs, PrecursorInput
+from .agents.guards.schema_guard import DataQualityGuard, DataQualityException
 
 # Setup logging
 logger = logging.getLogger(__name__)
@@ -277,6 +278,25 @@ def run_analysis(
         logger.info("-"*80)
         
         payload = map_extraction_to_payload(extraction_result, facility_name)
+
+        # ====================================================================
+        # STAGE 2.5: Business Logic Validation (Data Quality Guard)
+        # ====================================================================
+        logger.info("")
+        logger.info("🛡️  STAGE 2.5: DATA QUALITY VALIDATION (Schema Guard)")
+        logger.info("-"*80)
+
+        guard = DataQualityGuard()
+        is_valid, validation_errors = guard.validate_business_logic(payload)
+
+        if not is_valid:
+            for error in validation_errors:
+                logger.error(f"❌ {error}")
+            raise DataQualityException(
+                "DataQualityGuard rejected payload: " + " | ".join(validation_errors)
+            )
+
+        logger.info("✅ Data quality validation passed")
         
         # ====================================================================
         # STAGE 3: CBAM Audit (Agent #2)
@@ -347,6 +367,11 @@ def run_analysis(
         
         return final_results
         
+    except DataQualityException as e:
+        logger.error("="*80)
+        logger.error(f"❌ DATA QUALITY VALIDATION FAILED: {str(e)}")
+        logger.error("="*80)
+        raise
     except Exception as e:
         logger.error("="*80)
         logger.error(f"❌ PIPELINE FAILED: {str(e)}")

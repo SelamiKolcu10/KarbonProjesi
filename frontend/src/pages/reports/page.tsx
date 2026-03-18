@@ -45,19 +45,19 @@ const complianceConfig: Record<Compliance, {
   label: string; badgeClass: string; icon: React.ReactNode; rowClass: string;
 }> = {
   compliant: {
-    label: "Uyumlu",
+    label: "compliant",
     badgeClass: "bg-green-500/15 text-green-400 border-green-500/25",
     icon: <CheckCircle2 className="w-3.5 h-3.5 text-green-400" />,
     rowClass: "",
   },
   warning: {
-    label: "Dikkat",
+    label: "warning",
     badgeClass: "bg-yellow-500/15 text-yellow-400 border-yellow-500/25",
     icon: <AlertTriangle className="w-3.5 h-3.5 text-yellow-400" />,
     rowClass: "bg-yellow-500/3",
   },
   non_compliant: {
-    label: "Uyumsuz",
+    label: "nonCompliant",
     badgeClass: "bg-red-500/15 text-red-400 border-red-500/25",
     icon: <ShieldAlert className="w-3.5 h-3.5 text-red-400" />,
     rowClass: "bg-red-500/3",
@@ -84,26 +84,26 @@ function generateReportPDF(report: (typeof mockGeçmisRaporlar)[0], t: (key: str
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(16);
   doc.setFont("helvetica", "bold");
-  doc.text("CBAM KARBON DENETIM RAPORU", pageW / 2, 14, { align: "center" });
+  doc.text(t("reports.pdfTitle"), pageW / 2, 14, { align: "center" });
 
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(148, 163, 184);
-  doc.text("Karbon Sinir Duzenleme Mekanizmasi - Ajan 4 Ciktisi", pageW / 2, 22, { align: "center" });
+  doc.text(t("reports.pdfSubtitle"), pageW / 2, 22, { align: "center" });
 
   doc.setTextColor(30, 30, 30);
   doc.setFontSize(11);
   doc.setFont("helvetica", "bold");
-  doc.text("Denetim Bilgileri", 14, 44);
+  doc.text(t("reports.pdfAuditInfo"), 14, 44);
   doc.setDrawColor(220, 220, 220);
   doc.line(14, 46, pageW - 14, 46);
 
   const meta = [
-    ["Tesis Adi",          report.tesis],
-    ["Denetim Tarihi",     fmtFull(report.tarih)],
-    ["Periyot",            "2025 Q1 (Ocak - Mart 2025)"],
-    ["Uyumluluk Durumu",   complianceConfig[report.uyumluluk as Compliance].label],
-    ["Veri Guven Skoru",   `%${report.guvenSkoru}`],
+    [t("reports.facility"), report.tesis],
+    [t("reports.date"), fmtFull(report.tarih)],
+    [t("reports.period"), t("reports.defaultPeriod")],
+    [t("reports.compliance"), t(`reports.${complianceConfig[report.uyumluluk as Compliance].label}`)],
+    [t("reports.dataTrustScore"), `%${report.guvenSkoru}`],
   ];
 
   doc.setFont("helvetica", "normal");
@@ -117,10 +117,10 @@ function generateReportPDF(report: (typeof mockGeçmisRaporlar)[0], t: (key: str
   });
 
   const kpis = [
-    { label: "Toplam Emisyon", value: `${fmt(report.emisyon)} tCO2e` },
-    { label: "CBAM Vergisi (Tahmini)", value: fmtEur(report.cbamVergi) },
-    { label: "Emisyon Yogunlugu", value: "1,42 tCO2/ton" },
-    { label: "Uretim Miktari", value: "87.900 ton" },
+    { label: t("reports.totalEmission"), value: `${fmt(report.emisyon)} tCO2e` },
+    { label: t("reports.cbamTaxEstimate"), value: fmtEur(report.cbamVergi) },
+    { label: t("reports.emissionIntensity"), value: t("reports.defaultIntensity") },
+    { label: t("reports.productionQuantity"), value: t("reports.defaultProduction") },
   ];
   const boxW = (pageW - 28 - 9) / 4;
   kpis.forEach((kpi, i) => {
@@ -141,19 +141,19 @@ function generateReportPDF(report: (typeof mockGeçmisRaporlar)[0], t: (key: str
   doc.setFontSize(11);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(30, 30, 30);
-  doc.text("Detayli Emisyon Kirilimi", 14, 130);
+  doc.text(t("reports.detailedEmissionBreakdown"), 14, 130);
 
   autoTable(doc, {
     startY: 134,
-    head: [["Emisyon Kaynagi", "Miktar", "Birim", "tCO2e", "Durum"]],
+    head: [[t("reports.emissionSource"), t("reports.quantity"), t("reports.unit"), "tCO2e", t("reports.status")]],
     body: mockEmissionDetails.map((r) => [
       r.kaynak,
       new Intl.NumberFormat("tr-TR").format(r.miktar),
       r.birim,
       fmt(r.tCO2e),
-      r.anomali ? "! Anomali" : "Normal",
+      r.anomali ? t("reports.anomaly") : t("common.normal"),
     ]),
-    foot: [["TOPLAM", "", "", fmt(mockEmissionDetails.reduce((s, r) => s + r.tCO2e, 0)), ""]],
+    foot: [[t("common.total").toUpperCase(), "", "", fmt(mockEmissionDetails.reduce((s, r) => s + r.tCO2e, 0)), ""]],
     theme: "grid",
     headStyles: { fillColor: [15, 23, 42], textColor: 255, fontSize: 8, fontStyle: "bold" },
     bodyStyles: { fontSize: 8, textColor: [30, 30, 30] },
@@ -186,12 +186,12 @@ function generateReportPDF(report: (typeof mockGeçmisRaporlar)[0], t: (key: str
 
   autoTable(doc, {
     startY: afterTable + 4,
-    head: [["Kalem", "Deger"]],
+    head: [[t("reports.item"), t("reports.value")]],
     body: [
-      ["CBAM Faz Faktoru (2026)", `%${mockMaliEtki.cbamFazFaktoru}`],
+      [t("reports.cbamPhaseFactor") + " (2026)", `%${mockMaliEtki.cbamFazFaktoru}`],
       [t("reports.brutTaxLiability"), fmtEur(mockMaliEtki.brutVergi)],
-      ["Efektif Vergi (Krediler haric)", fmtEur(mockMaliEtki.efektifVergi)],
-      ["Celik Basina Maliyet", `€${mockMaliEtki.celikBasinaMaliyet.toFixed(2)}/ton`],
+      [t("reports.effectiveTaxNoCredits"), fmtEur(mockMaliEtki.efektifVergi)],
+      [t("reports.costPerTonSteel"), `€${mockMaliEtki.celikBasinaMaliyet.toFixed(2)}/ton`],
     ],
     theme: "striped",
     headStyles: { fillColor: [15, 23, 42], textColor: 255, fontSize: 8 },
@@ -213,25 +213,25 @@ function generateReportPDF(report: (typeof mockGeçmisRaporlar)[0], t: (key: str
     );
   }
 
-  doc.save(`CBAM_Rapor_${report.tesis.replace(/\s+/g, "_")}_${fmtDate(report.tarih).replace(/\./g, "-")}.pdf`);
+  doc.save(`${t("reports.filePrefix")}_${report.tesis.replace(/\s+/g, "_")}_${fmtDate(report.tarih).replace(/\./g, "-")}.pdf`);
 }
 
 // ─── CSV Exporter ───────────────────────────────────────────────────────────────
-function exportAllCSV(data: typeof mockGeçmisRaporlar) {
+function exportAllCSV(data: typeof mockGeçmisRaporlar, t: (key: string, options?: Record<string, unknown>) => string) {
   const rows = data.map((r) => ({
-    "Denetim Tarihi":     fmtDate(r.tarih),
-    "Tesis Adi":          r.tesis,
-    "Uyumluluk":          complianceConfig[r.uyumluluk as Compliance].label,
-    "Toplam Emisyon (tCO2e)": r.emisyon,
-    "CBAM Vergisi (EUR)": r.cbamVergi,
-    "Guven Skoru (%)":    r.guvenSkoru,
+    [t("reports.date")]: fmtDate(r.tarih),
+    [t("reports.facility")]: r.tesis,
+    [t("reports.compliance")]: t(`reports.${complianceConfig[r.uyumluluk as Compliance].label}`),
+    [t("reports.totalEmission") + " (tCO2e)"]: r.emisyon,
+    [t("reports.cbamTax") + " (EUR)"]: r.cbamVergi,
+    [t("reports.trust") + " (%)"]: r.guvenSkoru,
   }));
   const csv = Papa.unparse(rows, { quotes: true, header: true, delimiter: ";" });
   const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = `CBAM_Denetim_Arsivi_${new Date().toISOString().split("T")[0]}.csv`;
+  link.download = `${t("reports.csvFilePrefix")}_${new Date().toISOString().split("T")[0]}.csv`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -263,7 +263,7 @@ function SummaryStats({ data }: { data: typeof mockGeçmisRaporlar }) {
         {
           label: t("reports.complianceRate"),
           value: total > 0 ? `%${Math.round((compliant / total) * 100)}` : "—",
-          sub: `${compliant}/${total} uyumlu`,
+          sub: t("reports.compliantCount", { compliant, total }),
           icon: <ShieldCheck className="w-4 h-4" />,
           color: compliant / total >= 0.7 ? "text-green-400" : "text-yellow-400",
           bg: compliant / total >= 0.7 ? "bg-green-500/5 border-green-500/20" : "bg-yellow-500/5 border-yellow-500/20",
@@ -396,7 +396,7 @@ function ReportRow({
               className="bg-muted/20 rounded-xl border border-border/40 p-4 grid grid-cols-3 gap-4"
             >
               <div>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2 font-medium">Emisyon Kırılımı</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2 font-medium">{t("reports.emissionBreakdown")}</p>
                 <div className="space-y-1.5">
                   {[
                     { label: t("reports.scope1Direct"), value: "58.420", color: "bg-yellow-500" },
@@ -414,7 +414,7 @@ function ReportRow({
                 </div>
               </div>
               <div>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2 font-medium">Mali Özet</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2 font-medium">{t("reports.financialSummary")}</p>
                 <div className="space-y-1.5">
                   {[
                     { label: t("reports.cbamPhaseFactor"), value: "%2,5" },
@@ -430,23 +430,23 @@ function ReportRow({
                 </div>
               </div>
               <div>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2 font-medium">Tespit Edilen Anomaliler</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2 font-medium">{t("reports.detectedAnomalies")}</p>
                 <div className="space-y-1.5">
                   {report.uyumluluk !== "compliant" ? (
                     <>
                       <div className="flex items-start gap-1.5 text-[11px]">
                         <AlertTriangle className="w-3 h-3 text-yellow-400 flex-shrink-0 mt-0.5" />
-                        <span className="text-muted-foreground">Kömür tüketiminde önceki dönemden %34 artış</span>
+                        <span className="text-muted-foreground">{t("reports.anomalyCoalIncrease")}</span>
                       </div>
                       <div className="flex items-start gap-1.5 text-[11px]">
                         <AlertTriangle className="w-3 h-3 text-yellow-400 flex-shrink-0 mt-0.5" />
-                        <span className="text-muted-foreground">Hammadde taşıma — tedarikçi değişimi</span>
+                        <span className="text-muted-foreground">{t("reports.anomalySupplierChange")}</span>
                       </div>
                     </>
                   ) : (
                     <div className="flex items-center gap-1.5 text-[11px]">
                       <CheckCircle2 className="w-3 h-3 text-green-400" />
-                      <span className="text-muted-foreground">Anomali tespit edilmedi</span>
+                      <span className="text-muted-foreground">{t("reports.noAnomalyDetected")}</span>
                     </div>
                   )}
                 </div>
@@ -539,8 +539,8 @@ export default function ReportsPage() {
   };
 
   const handleCsvExport = () => {
-    exportAllCSV(filtered);
-    toast.success(`${filtered.length} kayıt Excel'e aktarıldı`);
+    exportAllCSV(filtered, t);
+    toast.success(t("reports.csvExportSuccess", { count: filtered.length }));
   };
 
   return (
@@ -593,7 +593,7 @@ export default function ReportsPage() {
           <CardHeader className="pb-3 pt-4">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
               <Filter className="w-3.5 h-3.5 text-muted-foreground" />
-              Filtreler
+              {t("reports.filters")}
               {hasFilters && (
                 <button onClick={clearFilters} className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors ml-2 font-normal">
                   <X className="w-3 h-3" />
@@ -616,7 +616,7 @@ export default function ReportsPage() {
 
               <Select value={filterCompliance} onValueChange={setFilterCompliance}>
                 <SelectTrigger className="h-9 text-xs">
-                  <SelectValue placeholder="Uyumluluk" />
+                  <SelectValue placeholder={t("reports.compliancePlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{t("reports.allStatuses")}</SelectItem>
@@ -654,30 +654,30 @@ export default function ReportsPage() {
                 <span className="text-[10px] text-muted-foreground">{t("reports.activeFilters")}</span>
                 {search && (
                   <Badge variant="secondary" className="text-[10px] gap-1 px-2">
-                    Arama: "{search}"
+                    {t("reports.searchFilterLabel")}: "{search}"
                     <button onClick={() => setSearch("")}><X className="w-2.5 h-2.5" /></button>
                   </Badge>
                 )}
                 {filterCompliance !== "all" && (
                   <Badge variant="secondary" className="text-[10px] gap-1 px-2">
-                    {complianceConfig[filterCompliance as Compliance]?.label}
+                    {t(`reports.${complianceConfig[filterCompliance as Compliance]?.label}`)}
                     <button onClick={() => setFilterCompliance("all")}><X className="w-2.5 h-2.5" /></button>
                   </Badge>
                 )}
                 {dateFrom && (
                   <Badge variant="secondary" className="text-[10px] gap-1 px-2">
-                    Başlangıç: {fmtDate(dateFrom)}
+                    {t("reports.startDateFilterLabel")}: {fmtDate(dateFrom)}
                     <button onClick={() => setDateFrom("")}><X className="w-2.5 h-2.5" /></button>
                   </Badge>
                 )}
                 {dateTo && (
                   <Badge variant="secondary" className="text-[10px] gap-1 px-2">
-                    Bitiş: {fmtDate(dateTo)}
+                    {t("reports.endDateFilterLabel")}: {fmtDate(dateTo)}
                     <button onClick={() => setDateTo("")}><X className="w-2.5 h-2.5" /></button>
                   </Badge>
                 )}
                 <span className="text-[10px] text-muted-foreground ml-auto">
-                  {filtered.length} / {mockGeçmisRaporlar.length} kayıt gösteriliyor
+                  {t("reports.resultsShown", { filtered: filtered.length, total: mockGeçmisRaporlar.length })}
                 </span>
               </div>
             )}
@@ -741,7 +741,7 @@ export default function ReportsPage() {
                       {t("reports.previous")}
                     </Button>
                     <span className="text-xs text-muted-foreground tabular-nums px-2">
-                      Sayfa {currentPage} / {totalPages}
+                      {t("reports.pageLabel", { page: currentPage, totalPages })}
                     </span>
                     <Button
                       variant="outline"

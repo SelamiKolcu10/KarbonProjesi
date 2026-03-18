@@ -32,6 +32,7 @@ from pydantic import BaseModel, Field, ConfigDict
 from src.agents.auditor.logic import AuditorEngine
 from src.agents.auditor.models import AuditOutput, InputPayload
 from src.agents.auditor.constants import CBAM_PHASE_2026, FREE_ALLOCATION_DEFAULT, ETS_PRICE_PER_TON_CO2
+from src.agents.explainability import AuditTrailReport, ExplainabilityAgent
 
 from .compliance_guard import ComplianceGuard, ComplianceRiskReport
 from .simulator import StrategySimulator, Recommendation
@@ -124,6 +125,16 @@ class ExecutiveConsultingReport(BaseModel):
             "tek paragrafta özetleyen yönetici metni"
         ),
     )
+    audit_trail_report: AuditTrailReport = Field(
+        default_factory=lambda: AuditTrailReport(
+            steps=[],
+            legal_disclaimer=(
+                "Explainability audit trail not generated yet. "
+                "Call ExplainabilityAgent.generate_audit_trail before final publication."
+            ),
+        ),
+        description="ExplainabilityAgent tarafından üretilen regülasyon odaklı audit trail",
+    )
     generated_at: datetime = Field(
         default_factory=datetime.now,
         description="Raporun oluşturulma zamanı",
@@ -194,6 +205,9 @@ class ChiefConsultantAgent:
 
         # Agent #3 Phase 2 — Optimizasyon Simülasyonu
         self._simulator = StrategySimulator(self._auditor)
+
+        # Agent #4 — Explainability katmanı
+        self._explainer = ExplainabilityAgent()
 
     # ──────────────────────────────────────────────────────────────────────
     # Public API
@@ -276,8 +290,8 @@ class ChiefConsultantAgent:
             stress_test=stress_test,
         )
 
-        # ── Adım 8: Rapor Oluştur ───────────────────────────────────────
-        return ExecutiveConsultingReport(
+        # ── Adım 8: Taslak Rapor + Explainability Audit Trail ───────────
+        report = ExecutiveConsultingReport(
             facility_name=payload.facility_name,
             reporting_period=payload.reporting_period,
             audit_summary=audit_summary,
@@ -287,6 +301,12 @@ class ChiefConsultantAgent:
             stress_test_scenarios=stress_test,
             ai_consultant_summary=ai_summary,
         )
+        report.audit_trail_report = self._explainer.generate_audit_trail(
+            payload, report
+        )
+
+        # ── Adım 9: Nihai Raporu Döndür ─────────────────────────────────
+        return report
 
     # ──────────────────────────────────────────────────────────────────────
     # Yardımcı Metotlar
