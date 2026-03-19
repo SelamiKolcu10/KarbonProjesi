@@ -93,6 +93,8 @@ Fabrikalar için yapay zeka destekli, çoklu ajan (multi-agent) tabanlı otomati
 - Agent Skills kapsaminda `multi-format-ingestion-assurance` becerisi eklendi; PDF/Excel/CSV/OCR icin format-bazli kalite kontrolleri, parser hatalarinda deterministik fallback hiyerarsisi ve taxonomy uyumlu hata raporlamasi tanimlanirken veri cikarim mantiginin carbon-math ve orchestrator cekirdeklerinden katmanli sekilde izole edilmesi standartlastirildi.
 - Agent Skills kapsaminda `reporting-payload-design-system` becerisi eklendi; Auditor ve Strategist ciktilarinin UI'dan bagimsiz stabil DTO rapor semalarina donusturulmesi, explainability kanitlari ile confidence/provenance metadata'sinin zorunlu eklenmesi ve finansal-senaryo-regulasyon bloklarinin hiyerarsik/kiyaslanabilir formatta disa aktarim standardi tanimlandi.
 - Agent Skills kapsaminda `architecture-guardian-scaffolding` meta-becerisi eklendi; yeni ajan/modul eklemelerinde 15 temel skill kuralina otomatik uyum kontrolu, veri girisi-hata taksonomisi-orkestrator yasam dongusu entegrasyon checklist'i ve carbon-math/rule-engine cekirdegini etkileyen yuksek riskli degisikliklerde zorunlu uyari + onay kapisi standartlastirildi.
+- Klasor yapisi sadeleştirme adimi tamamlandi; `.bat` dosyalari `bin/`, yardimci JS/Python scriptleri `scripts/js` ve `scripts/python`, cekirdek API/kurulum scriptleri `src/` altina tasinarak calistirma yollari ve test importlari yeni yapıya uyarlandi.
+- README dokumantasyonu bugun eklenen tum skill paketini (governance, kontrat, orkestrasyon guvenilirligi, explainability, reporting) ve klasor yapisi degisikliklerinin teknik etkisini kapsayacak sekilde detaylandirildi.
 
 ## Kisa Sonraki Adim
 

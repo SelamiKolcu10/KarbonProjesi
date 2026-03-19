@@ -1,8 +1,20 @@
-"""API tests for orchestrator endpoints in api.py."""
+"""API tests for orchestrator endpoints in src/api.py."""
+
+import sys
+import importlib.util
+from pathlib import Path
 
 from fastapi.testclient import TestClient
 
-import api as api_module
+project_root = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(project_root / "src"))
+
+api_file = project_root / "src" / "api.py"
+spec = importlib.util.spec_from_file_location("project_api", api_file)
+if spec is None or spec.loader is None:
+    raise RuntimeError(f"API module yuklenemedi: {api_file}")
+api_module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(api_module)
 import src.orchestration.orchestrator as orchestrator_module
 from src.agents.strategist import (
     ComplianceRiskReport,

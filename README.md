@@ -356,7 +356,7 @@ Pull request'ler kabul edilir. Büyük değişiklikler için lütfen önce issue
 ## Hizli Inceleme Sirasi
 
 1. PROJE_KONTROL.md dosyasindaki guncel durum notlarini oku.
-2. api.py icinde /api/upload ve /api/validate-payload akislarini incele.
+2. src/api.py icinde /api/upload ve /api/validate-payload akislarini incele.
 3. src/pipeline.py icindeki Stage 2 -> Stage 2.5 -> Stage 3 akisina bak.
 4. src/agents/guards/schema_guard.py icindeki business-rule kontrollerini kontrol et.
 
@@ -493,3 +493,66 @@ Bu bolum, bugun UI/UX ve entegrasyon tarafinda yapilan tum iyilestirmeleri tekni
 - Bu siralama ile once riskin nicel gosterimi (KPI + projeksiyon), sonra aksiyon plani (oneriler), en sonda kanitlanabilir hesaplama/yasal temel (audit trail) veriliyor.
 - Son ekran artik yalnizca "rapor gosteren" bir UI degil; yonetici karar sureci + regulatora sunulabilir delil zinciri bir arada sunan butunlesik bir panel kimligi kazandi.
 - Teknik olarak entegrasyon, mevcut ExecutiveConsultingReport akisinin davranisini bozmadan (fallback/null-safe render) asamali ve geriye uyumlu sekilde tamamlandi.
+
+### 14) Agent Skills Yonetisim Paketi (Bugun Eklenen Tum Skilller)
+
+Bu bolum, bugun olusturulan/standartlastirilan skill paketini amac, kapsadigi risk ve sistem etkisi acisindan detayli ozetler.
+
+- `agent-contract-registry`:
+  Data Miner, Auditor ve Strategist arasindaki JSON/Pydantic kontratlarin tek merkezde versiyonlanmasi, zorunlu alan sozlesmesi ve backward compatibility kontrolu tanimlandi. Bu sayede sessiz schema drift ve entegrasyon kirilmalari erken yakalanabilir hale geldi.
+- `payload-mapping-canonicalization`:
+  Ham extraction JSON'unun Auditor canonical payload formatina donusumunde unit normalization (kg/lbs, kWh/MWh, m3 vb.), null-safe hata davranisi ve alan bazli provenance baglama kurallari netlestirildi.
+- `carbon-math-governance`:
+  Emisyon faktorleri, CBAM katsayilari ve vergi formullerinin tek deterministic kaynakta yonetilmesi; finansal hesaplarda Decimal zorunlulugu ve regülasyon referansli formül disiplini standartlastirildi.
+- `golden-baseline-regression`:
+  Kritik emisyon/vergi hesaplari icin golden dataset karsilastirmasi, tolerans-asiminda fail-fast bloklama ve old/new farklarin analitik diff raporuyla sunulmasi politikasi eklendi.
+- `explainability-evidence-composer`:
+  Her sayisal ciktiya zorunlu kanit paketi (formul, mevzuat referansi, kaynak/provenance izi, sonuc->ham veri geri izlenebilirligi) baglanarak denetim kalitesi guclendirildi.
+- `data-quality-rule-engine`:
+  Fiziksel imkansizlik ve business rule kontrollerinin merkezi kural motorunda yonetilmesi, rule_id/rule_version bazli ihlal ciktilari ve orkestrasyondan izole kural yonetimi standardi getirildi.
+- `cbam-regulation-delta-tracker`:
+  AB CBAM mevzuat degisikliklerinin madde bazli delta takibi, etki haritalama (math/rule/reporting) ve tarihsel hesaplamada doneme uygun hukuki versiyon secimi zorunlulugu eklendi.
+- `agent-messaging-error-taxonomy`:
+  Coklu ajan mesajlasmasinda envelope standardi (correlation_id, sender/receiver, timestamp) ve domain-ozel hata kodlarina gore deterministic tepki (retry/fallback/dead-letter) sozlesmesi tanimlandi.
+- `orchestrator-lifecycle-reliability`:
+  Job lifecycle state machine gecisleri, idempotent calisma ilkeleri ve hata kodu sinifina dayali exponential backoff/dead-letter davranisi standartlastirildi.
+- `financial-stress-sensitivity-analyzer`:
+  ETS fiyati, allocation ve phase-in parametrelerinde baseline/best/worst matris tabanli stres testleri ile parametre etkisinin siralanmasi (sensitivity ranking) modeli eklendi.
+- `scenario-simulation-playbook`:
+  Strategist senaryolarinin sabit playbook template'leriyle (green shift, efficiency, scrap vb.) kiyaslanabilir CAPEX/OPEX/ROI ciktilari uretmesi ve stres test cagrisi zorunlulugu tanimlandi.
+- `api-contract-consistency-guard`:
+  Kok API ile moduler endpoint kontratlarinin capraz kontrolu, versiyonsuz breaking change bloklama ve entegrator odakli endpoint-delta raporlamasi tanimlandi.
+- `data-provenance-confidence-calibration`:
+  Alan bazli provenance kaydi, confidence kalibrasyon mantigi, dusuk-guvenli veriler icin human-in-the-loop kuyruk ve manuel override lineage (eski/yeni/karar sahibi/zaman) standardi eklendi.
+- `multi-format-ingestion-assurance`:
+  PDF/Excel/CSV/OCR icin format-bazli kalite kapilari, parser fallback hiyerarsisi ve taxonomy uyumlu hata raporlamasi ile ingestion katmani guclendirildi.
+- `reporting-payload-design-system`:
+  Auditor/Strategist ciktilarinin UI'dan bagimsiz, stabil DTO payload'lara donusmesi; explainability/provenance/confidence metadata'sinin zorunlu tasinmasi prensibi netlestirildi.
+- `architecture-guardian-scaffolding`:
+  Yeni ajan/modul eklemelerinde zorunlu compliance checklist'i, yuksek-risk degisikliklerde governance gate ve skill-bazli otomatik uyum denetimi icin meta-koruma modeli tanimlandi.
+
+Bu skill paketi birlikte ele alindiginda sistemde su 4 ana kazanci sagladi:
+
+- Sozlesme ve sema disiplini: API/agent arasi kirilmalari erken engelleme.
+- Deterministik hesap ve denetlenebilirlik: finansal/carbonsal sonuclarin tekrar uretilebilirligi.
+- Orkestrasyon guvenilirligi: hata sinifina gore tutarli lifecycle yonetimi.
+- Regulator/yonetim hazir raporlama: aciklanabilir, kanitlanabilir ve entegrasyon dostu cikti.
+
+### 15) Klasor Yapisi Sadelestirme ve Yol Guncellemeleri
+
+- Proje koku sadeleştirildi; yardimci dosyalar amacina gore ayrildi:
+  - `bin/`: tum `.bat` calistiricilar,
+  - `scripts/js`: yardimci JS scriptleri,
+  - `scripts/python`: yardimci Python scriptleri,
+  - `src/`: cekirdek API/kurulum scriptleri.
+- `api.py` dosyasi `src/api.py` konumuna tasindigi icin:
+  - calistirma komutu `python src/api.py` olacak sekilde guncellendi,
+  - testlerde modul importu isim cakismasini onleyecek sekilde dosya-yolu bazli yukleme modeline gecildi,
+  - API icindeki proje koku/path cozumleme mantigi yeni konuma gore duzeltildi.
+- `setup.py` `src/` altina alindiktan sonra `README.md` ve `requirements.txt` okumasi proje kokunden cozulur hale getirildi.
+
+### 16) Dogrulama ve Stabilite Kontrolleri
+
+- Tasima ve yol guncellemeleri sonrasinda API orchestrator testleri tekrar kosuldu.
+- `tests/test_api_orchestrator.py` senaryolari basariyla gecti (submit/process/status akislari).
+- Lint/syntax seviyesinde degisiklik yapilan kritik dosyalarda hata kalmadigi dogrulandi.

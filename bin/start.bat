@@ -1,4 +1,7 @@
 @echo off
+set "ROOT_DIR=%~dp0.."
+pushd "%ROOT_DIR%"
+
 echo ============================================
 echo   Karbon Salınımı Projesi - Başlatıcı
 echo ============================================
@@ -43,4 +46,6 @@ echo   http://localhost:8000 adresinde açılıyor
 echo   Durdurmak için Ctrl+C basın
 echo ============================================
 echo.
-python api.py
+python src/api.py
+
+popd
