@@ -1,94 +1,368 @@
-# 🤖 Karbon Salınımı Agentic AI Projesi
+# 🌍 Karbon Salınımı Agentic AI Sistemi
 
-CBAM (Carbon Border Adjustment Mechanism) belgelerinden otomatik veri çıkarımı ve uyumluluk denetimi yapan agentic AI sistemi.
+> CBAM (Carbon Border Adjustment Mechanism) belgelerinden otomatik veri çıkarımı, fizik-tabanlı emisyon denetimi, stratejik danışmanlık ve regülatör-uyumlu raporlama yapan çok-ajanlı (multi-agent) AI sistemi.
 
-## 🎯 Sistem Mimarisi
+[![Python](https://img.shields.io/badge/Python-3.8+-blue?logo=python)](https://python.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-green?logo=fastapi)](https://fastapi.tiangolo.com)
+[![React](https://img.shields.io/badge/React-18+-61dafb?logo=react)](https://reactjs.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5+-blue?logo=typescript)](https://typescriptlang.org)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
+
+---
+
+## 📑 İçindekiler
+
+- [Sistem Mimarisi](#-sistem-mimarisi)
+- [Ajanlar](#-ajanlar)
+- [Frontend](#-frontend-react--typescript)
+- [Agent Skills](#-agent-skills-yönetişim-paketi)
+- [API](#-api-fastapi)
+- [Proje Yapısı](#-proje-yapısı)
+- [Kurulum](#-kurulum)
+- [Kullanım](#-kullanım)
+- [Konfigürasyon](#-konfigürasyon)
+- [Testler](#-testler)
+- [Lisans](#-lisans)
+
+---
+
+## 🏗️ Sistem Mimarisi
 
 ```text
-┌─────────────┐      ┌─────────────┐      ┌──────────────┐
-│   Agent #1  │ ───> │  Pipeline   │ ───> │   Agent #2   │
-│  Extractor  │ JSON │   Adapter   │ Data │   Auditor    │
-│   (v3.0)    │      │             │      │   (v2.0)     │
-└─────────────┘      └─────────────┘      └──────────────┘
-     PDF/Excel           Mapping           Compliance Report
+                        ┌──────────────────────────────────┐
+                        │         React Frontend           │
+                        │  (Upload → Job Polling → Report) │
+                        └────────────────┬─────────────────┘
+                                         │ HTTP / REST
+                        ┌────────────────▼─────────────────┐
+                        │         FastAPI (src/api.py)      │
+                        │  /api/upload  /api/jobs  /api/... │
+                        └────────────────┬─────────────────┘
+                                         │
+                        ┌────────────────▼─────────────────┐
+                        │     Orchestrator (Job Lifecycle)  │
+                        │  PENDING → RUNNING → COMPLETED    │
+                        └──┬──────────┬──────────┬─────────┘
+                           │          │          │
+               ┌───────────▼──┐  ┌────▼─────┐  ┌▼──────────────┐
+               │  Ajan #1     │  │  Ajan #2 │  │  Ajan #3       │
+               │  Extractor   │  │  Auditor │  │  Strategist    │
+               │  (v3.0)      │  │  (v2.0)  │  │  (Chief + Sim) │
+               └──────────────┘  └──────────┘  └───────────────┘
+                    PDF/Excel     Emisyon/Mali    Öneri/Senaryo
 ```
 
-## 📋 Özellikler
+---
 
-### Ajan #1: Data Extractor ⭐ v3.0 (FULL-FEATURED)
+## 🤖 Ajanlar
 
-✅ PDF belgelerini okur (pdfplumber) - **53 sayfa/saniyede**  
-✅ Metni temizler ve normalleştirir  
-✅ LLM ile yapılandırılmış veri çıkarır (Gemini veya GPT)  
-✅ Sadece belgede mevcut olan bilgileri çıkarır  
-✅ Eksik veriler için 'NULL' döner (asla uydurma yapmaz)  
-✅ Standart JSON şeması kullanır  
+### Ajan #1 — Data Extractor `v3.0`
 
-#### 🆕 Yeni Özellikler (v3.0) - 6 Büyük Ekleme
+CBAM mevzuat belgelerini (PDF/Excel) okuyarak yapılandırılmış JSON verisi çıkarır.
 
-🚀 **Batch Processing** - Birden fazla PDF'i tek seferde işleme  
-✨ **Confidence Score** - Çıkarılan verinin güvenilirlik skoru (0.0-1.0)  
-📊 **Multi-Format Export** - CSV, Excel, SQL formatlarında export  
-📝 **Document Summary** - Otomatik belge özeti oluşturma  
-🌍 **Language Detection** - 5 dilde otomatik dil tespiti  
-📈 **Statistics & Reporting** - Detaylı işlem istatistikleri  
+| Özellik | Detay |
+|---|---|
+| PDF işleme | pdfplumber — 53 sayfa/saniye |
+| LLM desteği | Gemini veya OpenAI GPT |
+| Null-safety | Belgede olmayan veriler `"NULL"` döner, asla uydurma yapılmaz |
+| Confidence Score | Çıkarılan her alan için 0.0–1.0 güvenilirlik skoru |
+| Batch Processing | Birden fazla PDF tek seferde işlenir |
+| Multi-Format Export | CSV / Excel / SQL formatlarında dışa aktarım |
+| Document Summary | Otomatik belge özeti |
+| Language Detection | 5 dilde otomatik dil tespiti |
+| Cache Sistemi | Aynı PDF'i tekrar işlememek için (`<1 saniye`) |
+| Retry Mekanizması | API hatalarında 3 kez otomatik tekrar deneme |
+| Chunk Processing | Uzun belgeler için parçalı işleme |
+| Rate Limiting | API çağrı sınırı kontrolü |
+| Progress Callback | Gerçek zamanlı ilerleme bildirimi |
 
-#### ✨ v2.0 Özellikleri
+---
 
-✨ **Retry Mekanizması** - API hatalarında 3 kez otomatik tekrar deneme  
-✨ **Loglama Sistemi** - Detaylı log dosyaları (logs/)  
-✨ **Cache Sistemi** - Aynı PDF'i tekrar işlememek için (<1 saniye!)  
-✨ **Chunk Processing** - Uzun belgeler için parçalı işleme  
-✨ **PDF Metadata** - Otomatik metadata çıkarma  
-✨ **Rate Limiting** - API call sınırı kontrolü  
-✨ **Progress Callback** - Real-time ilerleme bildirimi  
-✨ **Detaylı Hata Mesajları** - Her adım loglanıyor  
+### Ajan #2 — Auditor Engine `v2.0`
 
-[CHANGELOG.md](CHANGELOG.md)'de tüm yeni özellikler detaylı açıklanıyor.
+Çıkarılan verilerden fizik-tabanlı emisyon ve mali uyumluluk denetimi yapar.
 
-### Ajan #2: Auditor Engine ⭐ v2.0 (CHEMISTRY-ENABLED)
+| Özellik | Detay |
+|---|---|
+| Scope 1 & 2 | Doğrudan + elektrik kaynaklı emisyonlar |
+| Process Emissions | Elektrot ve kireçtaşı kalsinasyon kimyası |
+| Precursor Tracking | Ferro-alaşımlar, hurda çelik, pig-iron gömülü emisyonları |
+| Fizik Validasyonu | Enerji yoğunluğu ve imkansızlık kontrolleri |
+| Mali Analiz | EU ETS karbon fiyatlaması ile maliyet hesabı |
+| CBAM Phase-in | 2026–2034 aşamalı geçiş desteği |
+| Confidence Score | AI destekli veri kalitesi değerlendirmesi |
+| Anomali Tespiti | Otomatik anormallik işaretleme |
+| Audit Trail | Her hesaplama adımı izlenebilir ve regülatöre sunulabilir |
 
-✅ Scope 1 & 2 emisyon hesaplamaları
-✅ **Process Emissions** - Elektrot ve kireçtaşı kalsinasyonu  
-✅ **Precursor Emissions** - Hammadde gömülü emisyonları  
-✅ **Confidence Scoring** - Veri kalitesi değerlendirmesi  
-✅ Fizik-tabanlı validasyon (enerji yoğunluğu kontrolleri)  
-✅ Mali etki analizi (EU ETS carbon pricing)  
-✅ CBAM phase-in desteği (2026-2034)  
-✅ Detaylı audit trail  
-✅ Anomali tespiti  
+---
 
-#### 🆕 v2.0 Özellikleri
+### Ajan #3 — Strategist `v1.0`
 
-⚗️ **Process Emissions** - Kimyasal reaksiyon emisyonları  
-🔩 **Precursor Tracking** - Ferro-alaşımlar, hurda çelik, pig-iron  
-🎯 **Confidence Score** - AI-powered veri kalitesi skoru  
-📊 **Breakdown Dictionary** - Kaynak bazında detaylı kırılım  
+Denetim sonuçlarını alarak yönetici-odaklı strateji ve senaryo analizi üretir.
 
-### 🔗 Integration Pipeline (FULL-STACK)
+**Alt modüller:**
 
-✅ Agent #1 ↔ Agent #2 entegrasyonu  
-✅ Null-safe veri dönüştürme  
-✅ Otomatik birim dönüşümü  
-✅ CLI + Python API  
-✅ Detaylı raporlama  
+- **`chief_consultant.py`** — Üst düzey strateji önerileri ve aksiyon planı (CAPEX/OPEX/ROI)
+- **`compliance_guard.py`** — CBAM uyum durumu ve risk değerlendirmesi
+- **`simulator.py`** — Green Shift, Verimlilik, Hurda gibi playbook tabanlı senaryo simülasyonları
+
+---
+
+### Integration Pipeline
+
+```python
+# Tek komutla uçtan uca analiz
+from src.pipeline import run_analysis
+
+results = run_analysis(
+    file_path="factory_invoice.pdf",
+    facility_name="ABC Çelik A.Ş.",
+    llm_provider="gemini",
+    use_cache=True
+)
+```
+
+Pipeline aşamaları:
+1. **Stage 1** — PDF ingestion & extraction (Ajan #1)
+2. **Stage 2** — Payload mapping & canonicalization
+3. **Stage 2.5** — Data Quality Guard (fail-fast validasyon)
+4. **Stage 3** — Emisyon denetimi (Ajan #2)
+5. **Stage 4** — Strateji & senaryo analizi (Ajan #3)
+6. **Stage 5** — Explainability & audit trail oluşturma
+
+---
+
+### QA — Regression Agent
+
+`src/qa/regression_agent.py` — Emisyon ve vergi hesaplarını golden dataset ile karşılaştırarak CI/CD ortamında doğrulanabilirlik sağlar.
+
+---
+
+## 🖥️ Frontend (React + TypeScript)
+
+Vite tabanlı modern yönetici paneli. Türkçe / İngilizce (i18n) tam destek.
+
+### Sayfalar
+
+| Sayfa | Açıklama |
+|---|---|
+| `/upload` | PDF/Excel yükleme, Data Quality hata gösterimi (422 kural kodu + aksiyon) |
+| `/dashboard` | KPI Cards, Tsunami Chart, Öneri Kartları, Audit Trail |
+| `/emission` | Emisyon detay görünümü |
+| `/projection` | 5 yıllık CBAM vergi projeksiyonu |
+| `/strategy` | Senaryo simülasyon sonuçları |
+| `/reports` | Raporlar ve dışa aktarım |
+| `/notifications` | Sistem bildirimleri (filtreli) |
+| `/settings` | Dil, LLM sağlayıcı ve sistem ayarları |
+
+### Dashboard Bileşenleri
+
+| Bileşen | Açıklama |
+|---|---|
+| `KPICards.tsx` | Readiness Score, 2026 Tahmini Vergi, Toplam CBAM Emisyonu — risk rengine göre dinamik |
+| `TsunamiChart.tsx` | Recharts tabanlı 5 yıllık CBAM vergi artışı bar chart |
+| `RecommendationCards.tsx` | Zorluk (Low/Med/High) ve finansal metriklerle stratejik öneri kartları |
+| `AuditTrail.tsx` | Regülatöre sunulabilir hesaplama adımları — formül + mevzuat referansı |
+
+### Job Akışı (Frontend ↔ Backend)
+
+```
+Upload → POST /api/upload
+       → POST /api/jobs/submit
+       → useJobPolling hook (PENDING → RUNNING → COMPLETED/FAILED)
+       → ExecutiveConsultingReport render (KPI + Chart + Öneriler + Audit)
+```
+
+---
+
+## 🧠 Agent Skills Yönetişim Paketi
+
+`.github/skills/` altında 16 skill ile sistemin davranış sözleşmeleri, kalite kapıları ve yönetişim kuralları tanımlanmıştır.
+
+| Skill | Amaç |
+|---|---|
+| `agent-contract-registry` | Ajan arası JSON/Pydantic kontratların merkezi versiyonlanması |
+| `payload-mapping-canonicalization` | Ham JSON → Auditor canonical payload dönüşüm kuralları |
+| `carbon-math-governance` | Emisyon faktörleri ve CBAM katsayılarının tek deterministik kaynakta yönetimi |
+| `golden-baseline-regression` | Kritik hesaplar için golden dataset karşılaştırması ve fail-fast bloklama |
+| `explainability-evidence-composer` | Her sayısal çıktıya zorunlu kanıt paketi (formül + mevzuat + provenance) |
+| `data-quality-rule-engine` | Fiziksel imkansızlık ve business rule kontrolleri — rule_id/version bazlı ihlal çıktıları |
+| `cbam-regulation-delta-tracker` | AB CBAM mevzuat değişikliklerinin madde bazlı delta takibi |
+| `agent-messaging-error-taxonomy` | Çoklu ajan mesajlaşmasında envelope standardı ve hata kodu bazlı tepki sözleşmesi |
+| `orchestrator-lifecycle-reliability` | Job lifecycle state machine — idempotent çalışma ve exponential backoff |
+| `financial-stress-sensitivity-analyzer` | ETS fiyatı / allocation / phase-in parametrelerinde stres testi matrisi |
+| `scenario-simulation-playbook` | Playbook tabanlı senaryo simülasyonları (green shift, efficiency, scrap vb.) |
+| `api-contract-consistency-guard` | API kontratları arası çapraz kontrol ve breaking change bloklama |
+| `data-provenance-confidence-calibration` | Alan bazlı provenance kaydı, confidence kalibrasyon ve human-in-the-loop kuyruğu |
+| `multi-format-ingestion-assurance` | PDF/Excel/CSV/OCR için format-bazlı kalite kapıları ve parser fallback hiyerarşisi |
+| `reporting-payload-design-system` | UI'dan bağımsız stabil DTO payload'lar ve zorunlu explainability metadata |
+| `architecture-guardian-scaffolding` | Yeni ajan/modül eklemelerinde zorunlu compliance checklist ve governance gate |
+
+---
+
+## ⚡ API (FastAPI)
+
+`src/api.py` — Çalıştırma: `python src/api.py`
+
+### Temel Endpoint'ler
+
+| Method | Endpoint | Açıklama |
+|---|---|---|
+| `POST` | `/api/upload` | PDF/Excel dosyası yükle |
+| `POST` | `/api/validate-payload` | Payload doğrula (Data Quality Guard) |
+| `POST` | `/api/jobs/submit` | Analiz işi başlat |
+| `GET` | `/api/jobs/{job_id}` | İş durumu sorgula (`PENDING/RUNNING/COMPLETED/FAILED/REJECTED_BY_GUARD`) |
+| `GET` | `/api/jobs/{job_id}/result` | Tamamlanan iş sonucunu getir |
+| `GET` | `/api/health` | Sistem sağlık kontrolü |
+
+### Hata Modeli
+
+Data Quality ihlallerinde `422` yanıtı kural kodlu ve yapısal döner:
+
+```json
+{
+  "detail": [
+    {
+      "rule_id": "PHYS_001",
+      "rule_version": "1.0",
+      "description": "Enerji yoğunluğu fiziksel sınırı aşıyor",
+      "action": "Elektrik tüketimini üretim miktarıyla orantılı girin"
+    }
+  ]
+}
+```
+
+---
+
+## 📁 Proje Yapısı
+
+```text
+KarbonSalınımProjesi/
+│
+├── src/                              # Backend çekirdeği
+│   ├── agents/
+│   │   ├── data_extractor.py         # Ajan #1 — PDF/Excel veri çıkarımı (v3.0)
+│   │   ├── auditor/                  # Ajan #2 — Emisyon denetimi (v2.0)
+│   │   │   ├── logic.py              #   Ana denetim mantığı
+│   │   │   ├── models.py             #   Pydantic veri modelleri
+│   │   │   ├── physics.py            #   Fizik-tabanlı validasyon
+│   │   │   ├── constants.py          #   Emisyon faktörleri ve sabitler
+│   │   │   └── logger.py             #   Audit-trail logger
+│   │   ├── strategist/               # Ajan #3 — Strateji ve senaryo
+│   │   │   ├── chief_consultant.py   #   Yönetici danışmanlık raporu
+│   │   │   ├── compliance_guard.py   #   CBAM uyum değerlendirmesi
+│   │   │   └── simulator.py          #   Senaryo simülasyonu
+│   │   ├── explainability/
+│   │   │   └── explainer.py          #   XAI açıklama üretici
+│   │   └── guards/
+│   │       └── schema_guard.py       #   Data Quality Guard (fail-fast)
+│   ├── orchestration/
+│   │   └── orchestrator.py           #   Job lifecycle yönetimi
+│   ├── api/
+│   │   └── main.py                   #   FastAPI modüler router
+│   ├── qa/
+│   │   └── regression_agent.py       #   Regression & golden baseline QA
+│   ├── utils/
+│   │   ├── cache.py                  #   PDF önbelleği
+│   │   ├── export.py                 #   CSV/Excel/SQL dışa aktarım
+│   │   ├── language.py               #   Dil tespiti
+│   │   ├── logger.py                 #   Merkezi loglama
+│   │   ├── retry.py                  #   Retry mekanizması
+│   │   ├── statistics.py             #   İşlem istatistikleri
+│   │   └── validators.py             #   Girdi validasyonu
+│   ├── api.py                        #   FastAPI ana uygulama
+│   ├── pipeline.py                   #   Uçtan uca analiz pipeline
+│   └── config.py                     #   Merkezi konfigürasyon
+│
+├── frontend/                         # React + TypeScript yönetici paneli
+│   ├── src/
+│   │   ├── pages/
+│   │   │   ├── upload/               #   Dosya yükleme + Data Quality feedback
+│   │   │   ├── dashboard/            #   Ana yönetici panosu
+│   │   │   ├── emission/             #   Emisyon detayı
+│   │   │   ├── projection/           #   5 yıllık projeksiyon
+│   │   │   ├── strategy/             #   Senaryo sonuçları
+│   │   │   ├── reports/              #   Raporlar
+│   │   │   ├── notifications/        #   Bildirimler
+│   │   │   └── settings/             #   Ayarlar
+│   │   ├── components/
+│   │   │   ├── dashboard/
+│   │   │   │   ├── KPICards.tsx      #   Risk-rengi dinamik KPI kartları
+│   │   │   │   ├── TsunamiChart.tsx  #   5 yıllık CBAM vergi bar chart
+│   │   │   │   ├── RecommendationCards.tsx  # Stratejik öneri kartları
+│   │   │   │   └── AuditTrail.tsx    #   Regülatör-uyumlu hesaplama izi
+│   │   │   ├── layout/
+│   │   │   │   ├── AppLayout.tsx     #   Ana sayfa düzeni
+│   │   │   │   ├── Sidebar.tsx       #   Gezinti çubuğu
+│   │   │   │   └── TopBar.tsx        #   Üst çubuk (dil seçici)
+│   │   │   └── ui/                   #   Ortak UI bileşenleri (Button, Card…)
+│   │   ├── hooks/
+│   │   │   └── useJobPolling.ts      #   Job durumu reaktif polling hook
+│   │   ├── lib/
+│   │   │   ├── api/
+│   │   │   │   ├── client.ts         #   Merkezi HTTP istemcisi
+│   │   │   │   ├── jobs.ts           #   Job API servisi
+│   │   │   │   └── types.ts          #   API tip tanımları
+│   │   │   ├── i18n.ts               #   TR/EN çeviri altyapısı
+│   │   │   ├── formatters.ts         #   Locale-aware sayı/para formatlama
+│   │   │   └── utils.ts              #   Genel yardımcılar
+│   │   └── locales/
+│   │       ├── tr.json               #   Türkçe çeviriler
+│   │       └── en.json               #   İngilizce çeviriler
+│   └── vite.config.ts
+│
+├── .github/
+│   └── skills/                       # 16 Agent Skills (yönetişim paketi)
+│       ├── agent-contract-registry/
+│       ├── carbon-math-governance/
+│       ├── cbam-regulation-delta-tracker/
+│       └── ... (13 skill daha)
+│
+├── tests/                            # Test paketi
+│   ├── test_api_orchestrator.py
+│   ├── test_auditor.py
+│   ├── test_data_extractor.py
+│   ├── test_orchestrator.py
+│   ├── test_v2_upgrade.py
+│   └── test_v3.py
+│
+├── examples/                         # Örnek kullanım scriptleri
+│   ├── run_data_extractor.py
+│   ├── demo_v3_features.py
+│   └── simple_usage.py
+│
+├── scripts/                          # Yardımcı scriptler
+│   ├── python/                       #   Python yardımcıları
+│   └── js/                           #   JS yardımcıları
+│
+├── bin/                              # Windows .bat çalıştırıcılar
+├── mevzuat_docs/                     # CBAM mevzuat PDF'leri
+├── docs/                             # Dokümantasyon
+│   ├── AJANLAR.md
+│   ├── CHANGELOG.md
+│   └── KURULUM.md
+├── requirements.txt
+├── .env.example
+└── README.md
+```
+
+---
 
 ## 🚀 Kurulum
 
-### 1. Gereksinimler
+### Gereksinimler
 
 - Python 3.8+
-- Gemini API Key VEYA OpenAI API Key
+- Node.js 18+
+- Gemini API Key **veya** OpenAI API Key
 
-### 2. Bağımlılıkları Yükle
+### 1 — Python bağımlılıkları
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 3. Ortam Değişkenlerini Ayarla
-
-`.env.example` dosyasını `.env` olarak kopyalayın ve API anahtarlarınızı girin:
+### 2 — Ortam değişkenleri
 
 ```bash
 cp .env.example .env
@@ -97,54 +371,58 @@ cp .env.example .env
 `.env` dosyasını düzenleyin:
 
 ```env
-GEMINI_API_KEY=your_actual_gemini_api_key_here
+GEMINI_API_KEY=your_gemini_api_key
 # VEYA
-OPENAI_API_KEY=your_actual_openai_api_key_here
+OPENAI_API_KEY=your_openai_api_key
 
 DEFAULT_LLM_PROVIDER=gemini
 ```
 
+### 3 — Frontend bağımlılıkları
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+### 4 — Backend API'yi başlat
+
+```bash
+python src/api.py
+```
+
+---
+
 ## 💡 Kullanım
 
-### Basit Kullanım
+### Ajan #1 — Data Extractor
 
 ```python
 from src.agents.data_extractor import DataExtractor
 
-# Data Extractor oluştur
 extractor = DataExtractor(llm_provider="gemini")
-
-# PDF'i işle
 result = extractor.process_document(
     pdf_path="mevzuat_docs/CELEX_32023R0956_EN_TXT.pdf",
     output_path="output/extracted_data.json"
 )
 
-# Sonuçları kullan
-print(result['document_name'])
-print(result['publication_date'])
+print(result['document_name'])       # "Regulation (EU) 2023/956"
+print(result['confidence_score'])    # 0.92
 ```
 
-### Detaylı Örnek
-
-```bash
-python examples/run_data_extractor.py
-```
-
-### Agent #2 Kullanımı (Auditor)
+### Ajan #2 — Auditor Engine
 
 ```python
 from src.agents.auditor import AuditorEngine
 from src.agents.auditor.models import InputPayload
 
-# Audit engine oluştur
 auditor = AuditorEngine(
     strict_physics=False,
-    cbam_phase_factor=0.025,  # 2026: 2.5% phase-in
+    cbam_phase_factor=0.025,   # 2026: %2.5 phase-in
     free_allocation=0.0
 )
 
-# Input data hazırla
 payload = InputPayload(
     facility_name="ABC Döküm Sanayi",
     reporting_period="2026-03",
@@ -153,188 +431,139 @@ payload = InputPayload(
     natural_gas_consumption_m3=15000.0
 )
 
-# Audit yap
 result = auditor.audit(payload)
-
-# Sonuçlar
-print(f"Total Emissions: {result.emissions.total_emissions:.2f} tCO2e")
-print(f"Financial Liability: €{result.financials.effective_liability_eur:,.2f}")
-print(f"Compliance: {result.is_compliant}")
+print(f"Toplam Emisyon : {result.emissions.total_emissions:.2f} tCO2e")
+print(f"Mali Yükümlülük: €{result.financials.effective_liability_eur:,.2f}")
+print(f"Uyum Durumu    : {result.is_compliant}")
 ```
 
-### Full Pipeline Kullanımı
+### Uçtan Uca Pipeline
 
 ```python
 from src.pipeline import run_analysis
 
-# Tek komutla complete analysis
 results = run_analysis(
     file_path="factory_invoice.pdf",
-    facility_name="My Steel Factory",
+    facility_name="ABC Çelik A.Ş.",
     llm_provider="gemini",
     use_cache=True
 )
 
-# Özet
-print(f"Total Emissions: {results['summary']['total_emissions_tco2e']:.2f} tCO2e")
-print(f"Liability: €{results['summary']['financial_liability_eur']:,.2f}")
-print(f"Status: {results['summary']['compliance_status']}")
+print(f"Toplam Emisyon : {results['summary']['total_emissions_tco2e']:.2f} tCO2e")
+print(f"Mali Yükümlülük: €{results['summary']['financial_liability_eur']:,.2f}")
+print(f"Durum          : {results['summary']['compliance_status']}")
 ```
 
 **CLI:**
 
 ```bash
-python -m src.pipeline document.pdf --facility-name "ABC Steel"
+python -m src.pipeline document.pdf --facility-name "ABC Çelik"
 ```
 
-## 📊 Çıktı Şeması
+---
 
-Data Extractor aşağıdaki JSON şemasını döndürür:
-
-```json
-{
-  "document_name": "string or NULL",
-  "document_number": "string or NULL",
-  "document_type": "string or NULL",
-  "publication_date": "YYYY-MM-DD or NULL",
-  "effective_date": "YYYY-MM-DD or NULL",
-  "issuing_authority": "string or NULL",
-  "legal_basis": "string or NULL",
-  "scope": "string or NULL",
-  "sectors_covered": ["array or NULL"],
-  "emissions_categories": ["array or NULL"],
-  "key_obligations": ["array or NULL"],
-  "reporting_requirements": "string or NULL",
-  "compliance_deadlines": [
-    {
-      "date": "YYYY-MM-DD",
-      "description": "string"
-    }
-  ],
-  "penalties": "string or NULL",
-  "relevant_articles": ["array or NULL"],
-  "_metadata": {
-    "source_file": "filename.pdf",
-    "extraction_date": "2026-03-04 12:30:00",
-    "llm_provider": "gemini",
-    "text_length": 45678
-  }
-}
-```
-
-## 🔑 Önemli Özellikler
-
-### NULL Değer Yönetimi
-
-Eğer belgede bir bilgi **açıkça belirtilmemişse**, o alan için `"NULL"` değeri döner. Sistem asla bilgi uydurmaz:
+## 📊 Çıktı Şeması (Data Extractor)
 
 ```json
 {
   "document_name": "Regulation (EU) 2023/956",
+  "document_number": "32023R0956",
+  "document_type": "regulation",
   "publication_date": "2023-05-16",
-  "some_missing_field": "NULL"  // ← Belgede yok
+  "effective_date": "2023-06-05",
+  "issuing_authority": "European Parliament and Council",
+  "sectors_covered": ["Cement", "Iron and steel", "Aluminium", "Fertilisers", "Electricity"],
+  "compliance_deadlines": [
+    { "date": "2026-01-01", "description": "Full CBAM reporting obligation begins" }
+  ],
+  "confidence_score": 0.94,
+  "_metadata": {
+    "source_file": "CELEX_32023R0956_EN_TXT.pdf",
+    "extraction_date": "2026-06-05 14:30:00",
+    "llm_provider": "gemini",
+    "text_length": 125847,
+    "language": "en"
+  }
 }
 ```
 
-### LLM Provider Değiştirme
+> **Not:** Belgede bulunmayan alanlar `"NULL"` döner. Sistem asla bilgi uydurmaz.
 
-```python
-# Gemini kullan
-extractor = DataExtractor(llm_provider="gemini")
-
-# GPT kullan
-extractor = DataExtractor(llm_provider="gpt")
-```
-
-## 📁 Proje Yapısı
-
-```text
-KarbonSalınımProjesi/
-├── src/
-│   ├── agents/
-│   │   ├── __init__.py
-│   │   └── data_extractor.py    # Ana ajan modülü
-│   ├── utils/
-│   │   ├── logger.py             # Loglama
-│   │   └── validators.py         # Validasyon
-│   └── config.py                 # Konfigürasyon
-├── examples/
-│   ├── run_data_extractor.py     # Detaylı örnek
-│   └── simple_usage.py           # Basit örnek
-├── mevzuat_docs/                 # PDF belgeleri
-├── output/                       # Çıktı JSON dosyaları
-├── logs/                         # Log dosyaları
-├── requirements.txt
-├── .env.example
-└── README.md
-```
+---
 
 ## 🔧 Konfigürasyon
 
-`src/config.py` dosyasında ayarları özelleştirebilirsiniz:
+`src/config.py`:
 
 ```python
-# LLM ayarları
-DEFAULT_LLM_PROVIDER = "gemini"  # veya "gpt"
-LLM_TEMPERATURE = 0.1            # Düşük = tutarlı
-LLM_MAX_TOKENS = 4096
-
-# Text işleme
-MAX_TEXT_LENGTH = 15000          # LLM'e gönderilecek max karakter
+DEFAULT_LLM_PROVIDER = "gemini"   # "gemini" veya "gpt"
+LLM_TEMPERATURE      = 0.1        # Düşük = tutarlı çıktı
+LLM_MAX_TOKENS       = 4096
+MAX_TEXT_LENGTH      = 15000      # LLM'e gönderilecek max karakter
+CACHE_ENABLED        = True
+RETRY_COUNT          = 3
 ```
 
-## 📝 Örnek Çıktı
+---
 
-```text
-📄 PDF okunuyor: CELEX_32023R0956_EN_TXT.pdf
-🧹 Metin temizleniyor... (125847 karakter)
-🤖 LLM ile veri çıkarılıyor (GEMINI)...
-💾 Veri kaydedildi: output/extracted_data.json
-✅ Extraction tamamlandı!
-
-======================================================================
-📊 ÇIKARILAN VERİ ÖZETİ
-======================================================================
-
-🏛️  Belge Adı: Regulation (EU) 2023/956
-📄 Belge No: 32023R0956
-📝 Belge Tipi: regulation
-📅 Yayın Tarihi: 2023-05-16
-⚡ Yürürlük Tarihi: 2023-06-05
-🏢 Yayınlayan Kurum: European Parliament and Council
-
-🏭 Kapsanan Sektörler (6):
-   • Cement
-   • Iron and steel
-   • Aluminium
-   • Fertilisers
-   • Electricity
-   ... ve 1 tane daha
-```
-
-## 🐛 Hata Ayıklama
-
-Loglar `logs/` klasöründe saklanır:
+## 🧪 Testler
 
 ```bash
-logs/data_extractor_example_20260304.log
+# Tüm testleri çalıştır
+pytest tests/ -v
+
+# Belirli test dosyası
+pytest tests/test_auditor.py -v
+pytest tests/test_api_orchestrator.py -v
 ```
 
-## ✅ Tamamlanan Ajanlar
+Test kapsamı:
+- `test_api_orchestrator.py` — Job submit/process/status akışları
+- `test_auditor.py` — Emisyon ve mali hesaplama doğruluğu
+- `test_data_extractor.py` — PDF çıkarım testleri
+- `test_orchestrator.py` — Orchestrator lifecycle
+- `test_v2_upgrade.py` — v2.0 geriye uyumluluk
+- `test_v3.py` — v3.0 özellik testleri
 
-- [x] **Ajan #1: Data Extractor** (v3.0) - PDF/Excel veri çıkarımı
-- [x] **Ajan #2: Auditor Engine** (v2.0) - CBAM compliance audit
-- [x] **Integration Pipeline** - Full-stack entegrasyon
+---
 
-## 🔜 Sıradaki Ajanlar
+## ✅ Tamamlanan Bileşenler
 
-- [ ] **Ajan #3: Compliance Checker** - Detaylı CBAM regulation kontrolü
-- [ ] **Ajan #4: Report Generator** - PDF/Excel rapor oluşturma
-- [ ] **Ajan #5: Document Classifier** - Belge tipi sınıflandırma
+- [x] **Ajan #1: Data Extractor** (v3.0) — PDF/Excel veri çıkarımı
+- [x] **Ajan #2: Auditor Engine** (v2.0) — CBAM emisyon ve mali denetim
+- [x] **Ajan #3: Strategist** (v1.0) — Yönetici danışmanlık + senaryo simülasyonu
+- [x] **Integration Pipeline** — Uçtan uca 5 aşamalı analiz akışı
+- [x] **Data Quality Guard** — Fail-fast validasyon katmanı
+- [x] **Orchestrator** — Asenkron job lifecycle yönetimi
+- [x] **Explainability Agent** — XAI + audit trail
+- [x] **Regression QA Agent** — Golden baseline doğrulaması
+- [x] **FastAPI Backend** — REST API + 422 kural kodlu hata modeli
+- [x] **React Frontend** — Upload → Polling → Executive Report akışı
+- [x] **i18n** — Türkçe / İngilizce tam destek
+- [x] **16 Agent Skills** — Yönetişim, kalite ve sözleşme paketi
+
+## 🔜 Planlanan Bileşenler
+
+- [ ] **Ajan #4: Report Generator** — PDF/Excel resmi rapor oluşturma
+- [ ] **Ajan #5: Document Classifier** — Belge tipi sınıflandırma
+- [ ] **Ajan #6: Regulation Monitor** — AB CBAM mevzuat değişikliklerini otomatik takip
+
+---
+
+## 📚 Dokümantasyon
+
+| Dosya | İçerik |
+|---|---|
+| [AJANLAR.md](docs/AJANLAR.md) | Her ajanın teknik detayları |
+| [CHANGELOG.md](docs/CHANGELOG.md) | Sürüm geçmişi ve değişiklik listesi |
+| [KURULUM.md](docs/KURULUM.md) | Detaylı kurulum kılavuzu |
+| [PROJE_KONTROL.md](PROJE_KONTROL.md) | Güncel durum notları ve kontrol listesi |
+
+---
 
 ## 📄 Lisans
 
-MIT License
+MIT License — Ayrıntılar için [LICENSE](LICENSE) dosyasına bakın.
 
 ## 👥 Katkıda Bulunma
 
@@ -342,217 +571,4 @@ Pull request'ler kabul edilir. Büyük değişiklikler için lütfen önce issue
 
 ---
 
-**Not:** Bu proje CBAM mevzuatı analizi için geliştirilmiştir. Gerçek uygulamalarda çıktıları mutlaka doğrulayın.
-
----
-## Son Eklenenler (Ozet)
-
-- Data Quality Guard katmani eklendi.
-- Pipeline tarafinda fail-fast validasyon (Stage 2.5) aktif edildi.
-- API tarafinda data quality hatalari icin kural kodlu 422 cevap modeli eklendi.
-- Frontend upload akisinda data quality hatalari kullaniciya aksiyon odakli gosterilmeye baslandi.
-- Frontend sayfalarinda TR/EN i18n kapsami genisletildi.
-
-## Hizli Inceleme Sirasi
-
-1. PROJE_KONTROL.md dosyasindaki guncel durum notlarini oku.
-2. src/api.py icinde /api/upload ve /api/validate-payload akislarini incele.
-3. src/pipeline.py icindeki Stage 2 -> Stage 2.5 -> Stage 3 akisina bak.
-4. src/agents/guards/schema_guard.py icindeki business-rule kontrollerini kontrol et.
-
----
-
-## Bugun Yapilan Degisiklikler (Detayli)
-
-Bu bolum, bugun UI/UX ve entegrasyon tarafinda yapilan tum iyilestirmeleri teknik akisla birlikte detaylandirir.
-
-### 1) Enterprise ve Orchestrator Altyapisi
-
-- Orchestrator job lifecycle katmani, asenkron denetim calistirma modelini standartlastiracak sekilde canliya alindi.
-- FastAPI tarafinda job submit ve status endpointleri ile API tabanli is takibi netlestirildi.
-- ExplainabilityAgent ile denetim sonucu yalnizca sayisal rapor olmaktan cikarilip regulator odakli izlenebilir adimlar (audit trail) ile guclendirildi.
-- RegressionAgent entegrasyonu ile emisyon/vergi hesaplarinda baseline uyumu korunarak CI/CD ortaminda dogrulanabilirlik arttirildi.
-- Bu katmanin birim ve entegrasyon testleriyle guard red, basarili tamamlama ve hata izolasyonu gibi kritik senaryolar kapsandi.
-
-### 2) Upload -> Orchestrator Baglantisi (Uctan Uca Akis)
-
-- Frontend upload akisi, native fetch cagrilarindan cikarilarak merkezi API istemcisi ve JobService etrafinda toplandi.
-- Upload sonrasi job submit + polling + tamamlanan sonucun gosterimi tek bir tutarli akis haline getirildi.
-- JobId state yonetimi netlestirildi ve backend status degisimleri (PENDING/RUNNING/COMPLETED/FAILED/REJECTED_BY_GUARD) UI tarafina reaktif sekilde baglandi.
-- Yeniden kullanilabilir useJobPolling hook'u ile polling baslatma, sonlandirma ve hata durumlarinda kontrollu kapanis mekanizmasi standartlastirildi.
-
-### 3) Data Quality Guard ve Fail-Fast Yaklasimi
-
-- Pipeline oncesi zorunlu validasyon adimi eklenerek hatali payload'larin denetim zincirine girmeden erken reddedilmesi saglandi.
-- API tarafinda data quality ihlalleri icin kodlu ve yapisal 422 cevap modeli kullanima alindi.
-- Frontend upload ekraninda bu 422 cevaplari kullaniciya sadece hata metni olarak degil:
-  - kural kodu,
-  - aciklama,
-  - aksiyon odakli yonlendirme
-  formatinda gosterilecek sekilde iyilestirildi.
-
-### 4) ExecutiveConsultingReport UI Donusumu
-
-- Upload tamamlanma ekranindaki ham JSON dump (pre/code blok) kaldirildi.
-- Yerine yonetici odakli ozet panel akisi tasarlandi:
-  1. AI Consultant Summary,
-  2. KPI Cards,
-  3. 5-Year Tsunami Chart.
-- Bu donusum ile "ham veri gosteren teknik ekran" modelinden "karar destek dashboard" modeline gecildi.
-
-### 5) KPI Cards Bileseni
-
-- Yeni KPI Cards bileseni ile ExecutiveConsultingReport icindeki kritik metrikler tek bakista sunuldu:
-  - Readiness Score,
-  - 2026 Estimated Tax,
-  - Total CBAM Emissions.
-- Readiness degerine gore risk rengi dinamiklestirildi:
-  - 70 alti: yuksek risk tonu,
-  - 80 ustu: dusuk risk tonu,
-  - ara bant: dikkat tonu.
-- Veri eksikligi durumlari sifirla maskelemek yerine N/A ile gosterilerek yoneticinin yanlis yorum yapmasi engellendi.
-
-### 6) Tsunami Chart (5 Yillik Vergi Projeksiyonu)
-
-- Recharts tabanli yeni bar chart ile bes yillik vergi artisi trendi gorunsellestirildi.
-- Projection object -> chart data array donusumu komponent icinde standart hale getirildi.
-- Y ekseni ve tooltip EUR formatina baglandi; artan mali riskin algilanmasi icin bar rengi risk odakli secildi.
-- Veri yoksa bos chart yerine anlasilir bir empty-state mesaji gosterilerek UX saglamlastirildi.
-
-### 7) Sonuc Ekrani Zenginlestirmeleri
-
-- Analysis Complete bandi altina readiness tabanli risk badge eklendi.
-- AI summary kutusuna metadata etiketleri eklendi:
-  - Readiness yuzdesi,
-  - Early Warning Signal,
-  - Job ID.
-- Early Warning katmani readiness skoruyla sinirli kalmayacak sekilde backend compliance/risk sinyalleri ile birlestirildi.
-- Korumaci siniflandirma stratejisi uygulandi: birden fazla risk sinyali varsa daha yuksek risk seviyesi tercih edildi.
-
-### 8) i18n Genislemesi ve Sinyal Etiketleme
-
-- Upload sonuc ekranindaki yeni metinler (risk, summary, signal vb.) TR/EN ceviri anahtarlarina tasindi.
-- Backend'den gelen teknik sinyal kodlari (ornegin non_compliant, rejected_by_guard) kullanici dostu etiketlere cevrildi.
-- Dashboard widget basliklari, N/A metinleri ve chart empty-state metinleri de i18n kapsamina alindi.
-
-### 9) Locale-Aware Sayisal/Para Formatlama
-
-- KPI ve chart bilesenlerinde sayi/para gostergeleri aktif dile gore (TR/EN) otomatik formatlanacak sekilde guncellendi.
-- Upload sonucundaki readiness gosterimi de ayni locale mantigina baglandi.
-- Tekrar eden formatter kodlarini azaltmak icin merkezi formatlama yardimcisi eklendi ve widget'lar bu utility'e tasindi.
-
-### 10) Teknik Etki Ozeti
-
-- Frontend tarafinda ham veri gosteriminden karar destek odakli yonetici paneline gecis tamamlandi.
-- Job status takibi, data quality feedback dongusu ve executive rapor gosterimi tek bir tutarli urun akisinda birlestirildi.
-- i18n + locale standardizasyonu ile farkli dil senaryolarinda gorunum tutarliligi arttirildi.
-- Kod organizasyonu, tekrar eden formatlama mantiginin merkezilesmesiyle daha bakimi kolay bir hale getirildi.
-
-### 11) RecommendationCards Bileseni (Stratejik Eylem Katmani)
-
-- Dashboard icin yeni `RecommendationCards` bileseni eklendi ve AI tarafindan uretilen ust duzey aksiyon onerileri yonetici ekraninda kart bazli bir modelle gosterilir hale getirildi.
-- Bilesen, `recommendations` dizisini prop olarak alacak sekilde tasarlandi; veri yoksa bos blok basmamak icin null-donus davranisi ile gereksiz UI kalabaligi engellendi.
-- Responsive grid yapisi ile mobilde tek kolon, masaustu gorunumde iki kolon duzeni kullanilarak hem okunabilirlik hem de bilgi yogunlugu dengelendi.
-- Her kartta su alanlar standartlastirildi:
-  - `strategy_name` (ana baslik),
-  - `difficulty` (Low/Medium/High rozet),
-  - `action_plan` (yoneticiye yonelik aciklayici metin),
-  - finansal metrik alt-gridi (Annual Savings, CAPEX, ROI/Payback).
-- Zorluk rozeti renk semantigi ile karar hizi arttirildi:
-  - Low: yesil,
-  - Medium: sari/turuncu,
-  - High: kirmizi.
-- Finansal metriklerde para degerleri EUR formatina baglandi; ROI degeri ise yil birimi ile birlikte gosterilerek finansal geri donusun yonetsel yorumlanmasi kolaylastirildi.
-- `potential_subsidies` verisi mevcut oldugunda kartin altinda ayri bir tesvik/grant paneli acilarak bu bilginin gozden kacmasi onlendi.
-- Bu panelde `lucide-react` ikonlari (odul/tesvik metaforu) kullanilarak metin yogunlugu azaltildi ve taranabilirlik guclendirildi.
-
-### 12) AuditTrail Bileseni (Regulator Uyumlu Izlenebilirlik)
-
-- Dashboard icin yeni `AuditTrail` bileseni eklendi; Explainable AI (XAI) adimlari tek bir resmi panelde bir araya getirilerek AB regulator denetimlerine uygun bir kanit katmani olusturuldu.
-- Bilesen, `auditReport` objesi uzerinden calisir:
-  - `steps[]` icinde hesaplama adimlari,
-  - `legal_disclaimer` icinde yasal cerceve/aciklama metni.
-- Ust baslikta resmi/kurumsal bir ton icin hukuk odakli ikon + "Legal & Calculation Audit Trail" basligi kullanildi.
-- Her adim ayri bir blokta sunularak denetim okunabilirligi artirildi; her blokta su bilgi hiyerarsisi izlendi:
-  - solda `step_name`,
-  - sagda belirgin `result_value + unit`,
-  - alt satirda `formula_applied` (monospace code stilinde),
-  - onun altinda `regulation_reference` (muted + italik, kitap ikonu ile).
-- Bu sunum sekli ile "sonuc" tek basina degil, sonuca giden hesaplama izi ve mevzuat dayanagi ile birlikte gosterilir hale geldi.
-- Bilesen altinda yer alan `legal_disclaimer`, raporun hukuki baglamini acikca belirterek yanlis yorum ve baglam kaybi riskini azaltti.
-
-### 13) ExecutiveConsultingReport Ana Akis Entegrasyonu
-
-- Yeni bilesenler upload sonu "analysis completed" gorunumune dogrudan entegre edildi ve mevcut KPI + Tsunami graf ikilisinin altina dogal bir karar akisi eklendi.
-- Render sirasi stratejik olarak su sekilde kurgulandi:
-  1. KPI Cards,
-  2. Tsunami Chart,
-  3. Strategic Action Plan (`RecommendationCards`),
-  4. ayirici cizgi,
-  5. Audit Trail (`AuditTrail`).
-- Bu siralama ile once riskin nicel gosterimi (KPI + projeksiyon), sonra aksiyon plani (oneriler), en sonda kanitlanabilir hesaplama/yasal temel (audit trail) veriliyor.
-- Son ekran artik yalnizca "rapor gosteren" bir UI degil; yonetici karar sureci + regulatora sunulabilir delil zinciri bir arada sunan butunlesik bir panel kimligi kazandi.
-- Teknik olarak entegrasyon, mevcut ExecutiveConsultingReport akisinin davranisini bozmadan (fallback/null-safe render) asamali ve geriye uyumlu sekilde tamamlandi.
-
-### 14) Agent Skills Yonetisim Paketi (Bugun Eklenen Tum Skilller)
-
-Bu bolum, bugun olusturulan/standartlastirilan skill paketini amac, kapsadigi risk ve sistem etkisi acisindan detayli ozetler.
-
-- `agent-contract-registry`:
-  Data Miner, Auditor ve Strategist arasindaki JSON/Pydantic kontratlarin tek merkezde versiyonlanmasi, zorunlu alan sozlesmesi ve backward compatibility kontrolu tanimlandi. Bu sayede sessiz schema drift ve entegrasyon kirilmalari erken yakalanabilir hale geldi.
-- `payload-mapping-canonicalization`:
-  Ham extraction JSON'unun Auditor canonical payload formatina donusumunde unit normalization (kg/lbs, kWh/MWh, m3 vb.), null-safe hata davranisi ve alan bazli provenance baglama kurallari netlestirildi.
-- `carbon-math-governance`:
-  Emisyon faktorleri, CBAM katsayilari ve vergi formullerinin tek deterministic kaynakta yonetilmesi; finansal hesaplarda Decimal zorunlulugu ve regülasyon referansli formül disiplini standartlastirildi.
-- `golden-baseline-regression`:
-  Kritik emisyon/vergi hesaplari icin golden dataset karsilastirmasi, tolerans-asiminda fail-fast bloklama ve old/new farklarin analitik diff raporuyla sunulmasi politikasi eklendi.
-- `explainability-evidence-composer`:
-  Her sayisal ciktiya zorunlu kanit paketi (formul, mevzuat referansi, kaynak/provenance izi, sonuc->ham veri geri izlenebilirligi) baglanarak denetim kalitesi guclendirildi.
-- `data-quality-rule-engine`:
-  Fiziksel imkansizlik ve business rule kontrollerinin merkezi kural motorunda yonetilmesi, rule_id/rule_version bazli ihlal ciktilari ve orkestrasyondan izole kural yonetimi standardi getirildi.
-- `cbam-regulation-delta-tracker`:
-  AB CBAM mevzuat degisikliklerinin madde bazli delta takibi, etki haritalama (math/rule/reporting) ve tarihsel hesaplamada doneme uygun hukuki versiyon secimi zorunlulugu eklendi.
-- `agent-messaging-error-taxonomy`:
-  Coklu ajan mesajlasmasinda envelope standardi (correlation_id, sender/receiver, timestamp) ve domain-ozel hata kodlarina gore deterministic tepki (retry/fallback/dead-letter) sozlesmesi tanimlandi.
-- `orchestrator-lifecycle-reliability`:
-  Job lifecycle state machine gecisleri, idempotent calisma ilkeleri ve hata kodu sinifina dayali exponential backoff/dead-letter davranisi standartlastirildi.
-- `financial-stress-sensitivity-analyzer`:
-  ETS fiyati, allocation ve phase-in parametrelerinde baseline/best/worst matris tabanli stres testleri ile parametre etkisinin siralanmasi (sensitivity ranking) modeli eklendi.
-- `scenario-simulation-playbook`:
-  Strategist senaryolarinin sabit playbook template'leriyle (green shift, efficiency, scrap vb.) kiyaslanabilir CAPEX/OPEX/ROI ciktilari uretmesi ve stres test cagrisi zorunlulugu tanimlandi.
-- `api-contract-consistency-guard`:
-  Kok API ile moduler endpoint kontratlarinin capraz kontrolu, versiyonsuz breaking change bloklama ve entegrator odakli endpoint-delta raporlamasi tanimlandi.
-- `data-provenance-confidence-calibration`:
-  Alan bazli provenance kaydi, confidence kalibrasyon mantigi, dusuk-guvenli veriler icin human-in-the-loop kuyruk ve manuel override lineage (eski/yeni/karar sahibi/zaman) standardi eklendi.
-- `multi-format-ingestion-assurance`:
-  PDF/Excel/CSV/OCR icin format-bazli kalite kapilari, parser fallback hiyerarsisi ve taxonomy uyumlu hata raporlamasi ile ingestion katmani guclendirildi.
-- `reporting-payload-design-system`:
-  Auditor/Strategist ciktilarinin UI'dan bagimsiz, stabil DTO payload'lara donusmesi; explainability/provenance/confidence metadata'sinin zorunlu tasinmasi prensibi netlestirildi.
-- `architecture-guardian-scaffolding`:
-  Yeni ajan/modul eklemelerinde zorunlu compliance checklist'i, yuksek-risk degisikliklerde governance gate ve skill-bazli otomatik uyum denetimi icin meta-koruma modeli tanimlandi.
-
-Bu skill paketi birlikte ele alindiginda sistemde su 4 ana kazanci sagladi:
-
-- Sozlesme ve sema disiplini: API/agent arasi kirilmalari erken engelleme.
-- Deterministik hesap ve denetlenebilirlik: finansal/carbonsal sonuclarin tekrar uretilebilirligi.
-- Orkestrasyon guvenilirligi: hata sinifina gore tutarli lifecycle yonetimi.
-- Regulator/yonetim hazir raporlama: aciklanabilir, kanitlanabilir ve entegrasyon dostu cikti.
-
-### 15) Klasor Yapisi Sadelestirme ve Yol Guncellemeleri
-
-- Proje koku sadeleştirildi; yardimci dosyalar amacina gore ayrildi:
-  - `bin/`: tum `.bat` calistiricilar,
-  - `scripts/js`: yardimci JS scriptleri,
-  - `scripts/python`: yardimci Python scriptleri,
-  - `src/`: cekirdek API/kurulum scriptleri.
-- `api.py` dosyasi `src/api.py` konumuna tasindigi icin:
-  - calistirma komutu `python src/api.py` olacak sekilde guncellendi,
-  - testlerde modul importu isim cakismasini onleyecek sekilde dosya-yolu bazli yukleme modeline gecildi,
-  - API icindeki proje koku/path cozumleme mantigi yeni konuma gore duzeltildi.
-- `setup.py` `src/` altina alindiktan sonra `README.md` ve `requirements.txt` okumasi proje kokunden cozulur hale getirildi.
-
-### 16) Dogrulama ve Stabilite Kontrolleri
-
-- Tasima ve yol guncellemeleri sonrasinda API orchestrator testleri tekrar kosuldu.
-- `tests/test_api_orchestrator.py` senaryolari basariyla gecti (submit/process/status akislari).
-- Lint/syntax seviyesinde degisiklik yapilan kritik dosyalarda hata kalmadigi dogrulandi.
+> **Önemli Not:** Bu sistem CBAM mevzuatı analizi ve uyumluluk değerlendirmesi için geliştirilmiştir. Gerçek uygulamalarda çıktılar yetkili bir uzman tarafından doğrulanmalıdır.
