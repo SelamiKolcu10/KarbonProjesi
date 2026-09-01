@@ -1,6 +1,6 @@
 # PDF Processing
 pdfplumber==0.11.0
-pypdf==4.1.0
+pypdf==6.16.1
 
 # LLM APIs
 google-generativeai==0.3.2
